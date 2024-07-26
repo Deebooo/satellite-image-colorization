@@ -1,0 +1,10 @@
+torch
+torchvision
+Pillow
+numpy
+tqdm
+rasterio
+matplotlib
+scikit-image
+scikit-learn
+torchmetrics
