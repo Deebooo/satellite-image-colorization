@@ -5,13 +5,11 @@ from sklearn.metrics import precision_score, recall_score, f1_score, jaccard_sco
 from tqdm import tqdm
 
 def calculate_metrics(generator, dataloader, device):
-    jss = []
     precisions = []
     recalls = []
     f1s = []
     ssim_scores = []
     psnr_values = []
-    accuracies = []
 
     generator.eval()
 
@@ -31,14 +29,10 @@ def calculate_metrics(generator, dataloader, device):
             precision = precision_score(real_binary.flatten(), gen_binary.flatten(), average='binary', zero_division=1)
             recall = recall_score(real_binary.flatten(), gen_binary.flatten(), average='binary', zero_division=1)
             f1 = f1_score(real_binary.flatten(), gen_binary.flatten(), average='binary', zero_division=1)
-            jaccard = jaccard_score(real_binary.flatten(), gen_binary.flatten(), average='binary', zero_division=1)
-            accuracy = accuracy_score(real_binary.flatten(), gen_binary.flatten())
 
             precisions.append(precision)
             recalls.append(recall)
             f1s.append(f1)
-            jss.append(jaccard)
-            accuracies.append(accuracy)
 
             mse = np.mean((real_np - gen_np) ** 2)
             psnr = 20 * np.log10(1.0 / np.sqrt(mse))
@@ -51,8 +45,6 @@ def calculate_metrics(generator, dataloader, device):
                 ssim_scores.append(ssim_score)
 
     return {
-        'jaccard': np.mean(jss),
-        'accuracy': np.mean(accuracies),
         'precision': np.mean(precisions),
         'recall': np.mean(recalls),
         'f1': np.mean(f1s),

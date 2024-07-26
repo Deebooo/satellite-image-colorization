@@ -57,6 +57,7 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
     no_improve_epochs = 0
 
     best_loss = float('inf')
+    best_ssim = float('-inf')
 
     for epoch in range(num_epochs):
         generator.train()
@@ -111,13 +112,13 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
         print(f"[Epoch {epoch}/{num_epochs}] "
               f"[D loss: {avg_loss_D:.3f}] [G loss: {avg_loss_G:.3f}] "
               f"[Val G loss: {val_loss_G:.3f}] "
-              f"[Accuracy: {metrics['accuracy']:.3f}] [Precision: {metrics['precision']:.3f}] "
+              f"[Precision: {metrics['precision']:.3f}] "
               f"[Recall: {metrics['recall']:.3f}] [F1 Score: {metrics['f1']:.3f}] "
-              f"[PSNR: {metrics['psnr']:.3f}] [SSIM: {metrics['ssim']:.3f}] "
-              f"[Jaccard: {metrics['jaccard']:.3f}]")
+              f"[PSNR: {metrics['psnr']:.3f}] [SSIM: {metrics['ssim']:.3f}] ")
 
-        if val_loss_G < best_loss:
+        if val_loss_G < best_loss and metrics['ssim'] > best_ssim:
             best_loss = val_loss_G
+            best_ssim = metrics['ssim']
             no_improve_epochs = 0
             torch.save({
                 'epoch': epoch,
@@ -127,6 +128,11 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
                 'optimizer_D_state_dict': optimizer_D.state_dict(),
                 'loss_G': avg_loss_G,
                 'loss_D': avg_loss_D,
+                'ssim': metrics['ssim'],
+                'recall': metrics['recall'],
+                'f1': metrics['f1'],
+                'precision': metrics['precision'],
+                'psnr': metrics['psnr']
             }, 'best_checkpoint.pth')
         else:
             no_improve_epochs += 1
