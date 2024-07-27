@@ -105,20 +105,6 @@ repo
 <img src="https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/ec559a9f6bfd399b82bb44393651661b08aaf7ba/icons/folder-src-open.svg" width="80" />
 
 ## 🚀 Getting Started
-
-### ✅ Prerequisites
-
-Before you begin, ensure that you have the following prerequisites installed:
-> - Install Python: Make sure you have Python installed on your system. You can download the latest version of Python from the official Python website (https://www.python.org/) and follow the installation instructions specific to your operating system.
-> - Set up a virtual environment (optional but recommended): It's a good practice to create a virtual environment to isolate your project dependencies. Open a terminal or command prompt and run the following commands:
-    On Windows:
-        python -m venv myenv
-        myenv\Scripts\activate
-    On macOS and Linux:
-        python3 -m venv myenv
-    source myenv/bin/activate
-
-
 ## 🗺 Roadmap
 
 > - [X] [📌  Task 1: Implement satellite images colorization using an initial dataset]
