@@ -24,7 +24,6 @@
 - [💫 Features](#-features)
 - [📂 Project Structure](#project-structure)
 - [🧩 Modules](#modules)
-- [🚀 Getting Started](#-getting-started)
 - [🗺 Roadmap](#-roadmap)
 - [🤝 Contributing](#-contributing)
 - [📄 License](#-license)
@@ -104,7 +103,6 @@ repo
 
 <img src="https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/ec559a9f6bfd399b82bb44393651661b08aaf7ba/icons/folder-src-open.svg" width="80" />
 
-## 🚀 Getting Started
 ## 🗺 Roadmap
 
 > - [X] [📌  Task 1: Implement satellite images colorization using an initial dataset]
