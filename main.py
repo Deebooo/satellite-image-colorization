@@ -21,7 +21,7 @@ if __name__ == "__main__":
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
 
-    dataset = SatelliteImageDataset("/local_disk/helios/skhelil/fichiers/images_satt/satt_decoup", transform=transform)
+    dataset = SatelliteImageDataset("/local_disk/helios/skhelil/fichiers/images_satt/tiles", transform=transform)
 
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size
