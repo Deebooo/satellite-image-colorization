@@ -41,7 +41,8 @@ def calculate_metrics(generator, dataloader, device):
             for i in range(gen_np.shape[0]):
                 ssim_score = ssim(real_np[i].transpose(1, 2, 0),
                                   gen_np[i].transpose(1, 2, 0),
-                                  multichannel=True, data_range=gen_np[i].max() - gen_np[i].min())
+                                  multichannel=True, data_range=gen_color_np[i].max() - gen_color_np[i].min(),
+                                  win_size=7, channel_axis=2)
                 ssim_scores.append(ssim_score)
 
     return {
