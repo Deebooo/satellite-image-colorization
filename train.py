@@ -117,6 +117,7 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
               f"[PSNR: {metrics['psnr']:.3f}] [SSIM: {metrics['ssim']:.3f}] ")
 
 
+
         if val_loss_G < best_loss and metrics['ssim'] > best_ssim:
             best_loss = val_loss_G
             best_ssim = metrics['ssim']
