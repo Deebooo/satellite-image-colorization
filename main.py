@@ -9,7 +9,8 @@ from train import train
 
 if __name__ == "__main__":
     batch_size = 32
-    num_epochs = 100
+    val_batch_size = 32
+    num_epochs = 50
     image_size = 256
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -28,7 +29,7 @@ if __name__ == "__main__":
     train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
 
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
-    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
+    val_dataloader = DataLoader(val_dataset, batch_size=val_batch_size, shuffle=False, num_workers=4)
 
     generator = Generator()
     discriminator = Discriminator()
