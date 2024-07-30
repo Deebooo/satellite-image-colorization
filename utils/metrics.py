@@ -4,7 +4,7 @@ from skimage.metrics import structural_similarity as ssim
 from sklearn.metrics import precision_score, recall_score, f1_score, jaccard_score, accuracy_score
 from tqdm import tqdm
 import torch.nn.functional as F
-#test#
+
 def calculate_metrics(generator, dataloader, device):
     precisions = []
     recalls = []
