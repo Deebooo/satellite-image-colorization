@@ -53,7 +53,6 @@ def calculate_metrics(generator, dataloader, device):
             f1s.append(f1.item())
             jaccard_scores.append(jaccard.item())
             accuracies.append(accuracy.item())
-            ssim_scores.append(ssim)
 
             # Calculate PSNR for the entire batch
             mse = F.mse_loss(gen_color, real_color).item()
