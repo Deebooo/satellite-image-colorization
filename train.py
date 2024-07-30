@@ -144,7 +144,7 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
             print(f"Early stopping triggered after {early_stopping_patience} epochs without improvement.")
             break
 
-        if epoch % 5 == 0:
+        if epoch % 3 == 0:
             save_sample_images(generator, grayscale, real_color, epoch)
 
     return generator, discriminator
