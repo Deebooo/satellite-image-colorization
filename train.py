@@ -4,7 +4,6 @@ import torch.optim as optim
 from tqdm import tqdm
 from utils.metrics import calculate_metrics
 from utils.visualization import save_sample_images
-from utils.utils import weights_init_normal
 
 def validate(generator, discriminator, dataloader, criterion_GAN, criterion_pixelwise, device, lambda_pixel):
     generator.eval()
