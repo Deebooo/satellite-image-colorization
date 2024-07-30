@@ -113,7 +113,9 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
               f"[Val G loss: {val_loss_G:.3f}] "
               f"[Precision: {metrics['precision']:.3f}] "
               f"[Recall: {metrics['recall']:.3f}] [F1 Score: {metrics['f1']:.3f}] "
+              f"[Jaccard: {metrics['jaccard']:.3f}] [Accuracy: {metrics['accuracy']:.3f}] "
               f"[PSNR: {metrics['psnr']:.3f}] [SSIM: {metrics['ssim']:.3f}] ")
+
 
         if val_loss_G < best_loss and metrics['ssim'] > best_ssim:
             best_loss = val_loss_G
@@ -131,7 +133,8 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
                 'recall': metrics['recall'],
                 'f1': metrics['f1'],
                 'precision': metrics['precision'],
-                'psnr': metrics['psnr']
+                'psnr': metrics['psnr'],
+                'jaccard': metrics['jaccard']
             }, 'best_checkpoint.pth')
         else:
             no_improve_epochs += 1

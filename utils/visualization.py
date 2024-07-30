@@ -1,6 +1,7 @@
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
 
 def save_sample_images(generator, grayscale, real_color, epoch):
     save_dir = '/local_disk/helios/skhelil/fichiers/GAN_training/'
