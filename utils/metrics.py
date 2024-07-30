@@ -20,27 +20,30 @@ def calculate_metrics(generator, dataloader, device):
 
             gen_color = generator(grayscale)
 
-            real_np = real_color.cpu().numpy()
-            gen_np = gen_color.cpu().numpy()
+            # Convert tensors to numpy arrays for binary comparison
+            real_binary = (real_color > 0.5).int().cpu().numpy().flatten()
+            gen_binary = (gen_color > 0.5).int().cpu().numpy().flatten()
 
-            real_binary = (real_np > 0.5).astype(int)
-            gen_binary = (gen_np > 0.5).astype(int)
-
-            precision = precision_score(real_binary.flatten(), gen_binary.flatten(), average='binary', zero_division=1)
-            recall = recall_score(real_binary.flatten(), gen_binary.flatten(), average='binary', zero_division=1)
-            f1 = f1_score(real_binary.flatten(), gen_binary.flatten(), average='binary', zero_division=1)
+            # Calculate pixel-wise metrics for the entire batch
+            precision = precision_score(real_binary, gen_binary, average='binary')
+            recall = recall_score(real_binary, gen_binary, average='binary')
+            f1 = f1_score(real_binary, gen_binary, average='binary')
 
             precisions.append(precision)
             recalls.append(recall)
             f1s.append(f1)
 
-            mse = np.mean((real_np - gen_np) ** 2)
+            # Calculate PSNR for the entire batch
+            mse = F.mse_loss(gen_color, real_color).item()
             psnr = 20 * np.log10(1.0 / np.sqrt(mse))
             psnr_values.append(psnr)
 
-            for i in range(gen_np.shape[0]):
-                ssim_score = ssim(real_np[i].transpose(1, 2, 0),
-                                  gen_np[i].transpose(1, 2, 0),
+            # Calculate SSIM for each image in the batch
+            real_color_np = real_color.cpu().numpy()
+            gen_color_np = gen_color.cpu().numpy()
+            for i in range(gen_color_np.shape[0]):
+                ssim_score = ssim(real_color_np[i].transpose(1, 2, 0),
+                                  gen_color_np[i].transpose(1, 2, 0),
                                   multichannel=True, data_range=gen_color_np[i].max() - gen_color_np[i].min(),
                                   win_size=7, channel_axis=2)
                 ssim_scores.append(ssim_score)
