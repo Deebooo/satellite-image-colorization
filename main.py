@@ -9,7 +9,7 @@ from train import train
 
 if __name__ == "__main__":
     batch_size = 32
-    val_batch_size = 16
+    val_batch_size = 32
     num_epochs = 100
     image_size = 256
 
