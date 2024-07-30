@@ -3,6 +3,7 @@ import numpy as np
 from skimage.metrics import structural_similarity as ssim
 from torchmetrics.functional import precision as precision_metric
 from torchmetrics.functional import recall as recall_metric
+from torchmetrics.functional import f1_score as f1_score_metric
 from tqdm import tqdm
 import torch.nn.functional as F
 
@@ -29,16 +30,11 @@ def calculate_metrics(generator, dataloader, device):
             # Calculate precision, recall, and F1 score using torchmetrics
             precision = precision_metric(gen_binary, real_binary, task='binary').to(device)
             recall = recall_metric(gen_binary, real_binary, task='binary').to(device)
-
-            # Calculate F1 score using the previously calculated precision and recall
-            if precision.item() + recall.item() > 0:
-                f1 = 2 * (precision.item() * recall.item()) / (precision + recall.item())
-            else:
-                f1 = 0.0
+            f1 = f1_score_metric(gen_binary, real_binary, task="binary").to(device)
 
             precisions.append(precision.item())
             recalls.append(recall.item())
-            f1s.append(f1)
+            f1s.append(f1.item())
 
             # Calculate PSNR for the entire batch
             mse = F.mse_loss(gen_color, real_color).item()
@@ -56,9 +52,9 @@ def calculate_metrics(generator, dataloader, device):
                 ssim_scores.append(ssim_score)
 
     return {
-        'precision': np.mean(precisions),
-        'recall': np.mean(recalls),
-        'f1': np.mean(f1s),
+        'precision': torch.mean(torch.tensor(precisions)).item(),
+        'recall': torch.mean(torch.tensor(recalls)).item(),
+        'f1': torch.mean(torch.tensor(f1s)).item(),
         'psnr': np.mean(psnr_values),
         'ssim': np.mean(ssim_scores)
     }
