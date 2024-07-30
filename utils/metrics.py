@@ -28,10 +28,12 @@ def calculate_metrics(generator, dataloader, device):
             # Calculate pixel-wise metrics for the entire batch
             precision = precision_score(real_binary, gen_binary, average='binary')
             recall = recall_score(real_binary, gen_binary, average='binary')
-            f1 = f1_score(real_binary, gen_binary, average='binary')
 
-            precisions.append(precision)
-            recalls.append(recall)
+            # Calculate F1 score using the previously calculated precision and recall
+            if precision + recall > 0:
+                f1 = 2 * (precision * recall) / (precision + recall)
+            else:
+                f1 = 0.0
             f1s.append(f1)
 
             # Calculate PSNR for the entire batch
