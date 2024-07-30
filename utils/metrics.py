@@ -27,8 +27,8 @@ def calculate_metrics(generator, dataloader, device):
             gen_binary = (gen_color > 0.5).float()
 
             # Calculate precision, recall, and F1 score using torchmetrics
-            precision = precision_metric(gen_binary, real_binary, task='binary')
-            recall = recall_metric(gen_binary, real_binary, task='binary')
+            precision = precision_metric(gen_binary, real_binary, task='binary').to(device)
+            recall = recall_metric(gen_binary, real_binary, task='binary').to(device)
 
             # Calculate F1 score using the previously calculated precision and recall
             if precision.item() + recall.item() > 0:
