@@ -5,7 +5,7 @@ from torchmetrics.functional import recall as recall_metric
 from torchmetrics.functional import f1_score as f1_score_metric
 from torchmetrics.functional import jaccard_index as jaccard_metric
 from torchmetrics.functional import accuracy as accuracy_metric
-from torchmetrics.functional import structural_similarity_index_measure as ssim_metric
+from torchmetrics.image import StructuralSimilarityIndexMeasure as ssim_metric
 from tqdm import tqdm
 import torch.nn.functional as F
 
@@ -59,6 +59,5 @@ def calculate_metrics(generator, dataloader, device):
         'f1': torch.mean(torch.tensor(f1s)).item(),
         'psnr': np.mean(psnr_values),
         'ssim': torch.mean(torch.tensor(ssim_scores)).item(),
-        'jaccard': torch.mean(torch.tensor(jaccard_scores)).item(),
-        'accuracy': torch.mean(torch.tensor(accuracies)).item()
+        'jaccard': torch.mean(torch.tensor(jaccard_scores)).item()
     }

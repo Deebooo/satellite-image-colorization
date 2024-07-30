@@ -113,7 +113,7 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
               f"[Val G loss: {val_loss_G:.3f}] "
               f"[Precision: {metrics['precision']:.3f}] "
               f"[Recall: {metrics['recall']:.3f}] [F1 Score: {metrics['f1']:.3f}] "
-              f"[Jaccard: {metrics['jaccard']:.3f}] [Accuracy: {metrics['accuracy']:.3f}] "
+              f"[Jaccard: {metrics['jaccard']:.3f}] "
               f"[PSNR: {metrics['psnr']:.3f}] [SSIM: {metrics['ssim']:.3f}] ")
 
 
