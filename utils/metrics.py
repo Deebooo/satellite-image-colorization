@@ -41,7 +41,7 @@ def calculate_metrics(generator, dataloader, device):
             psnr = 20 * np.log10(1.0 / np.sqrt(mse))
             psnr_values.append(psnr)
 
-            # Calculate SSIM for each image in the batch
+            # SSIM for each image in the batch
             real_color_np = real_color.cpu().numpy()
             gen_color_np = gen_color.cpu().numpy()
             for i in range(gen_color_np.shape[0]):
