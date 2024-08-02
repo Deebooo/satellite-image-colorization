@@ -45,8 +45,8 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
         print(f"Using {torch.cuda.device_count()} GPUs for data parallelism for discriminator.")
         discriminator = nn.DataParallel(discriminator)
 
-    optimizer_G = optim.Adam(generator.parameters(), lr=0.0003, betas=(0.5, 0.999))         # was 0.0002
-    optimizer_D = optim.Adam(discriminator.parameters(), lr=0.0003, betas=(0.5, 0.999))     # was 0.0002
+    optimizer_G = optim.Adam(generator.parameters(), lr=0.0002, betas=(0.5, 0.999))         # was 0.0002
+    optimizer_D = optim.Adam(discriminator.parameters(), lr=0.0002, betas=(0.5, 0.999))     # was 0.0002
 
     criterion_GAN = nn.MSELoss()
     criterion_pixelwise = nn.L1Loss()
@@ -116,25 +116,21 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
               f"[Jaccard: {metrics['jaccard']:.3f}] "
               f"[PSNR: {metrics['psnr']:.3f}] [SSIM: {metrics['ssim']:.3f}] ")
 
-        if val_loss_G < best_loss and metrics['ssim'] > best_ssim:
-            best_loss = val_loss_G
-            best_ssim = metrics['ssim']
+        if val_loss_G < best_loss or metrics['ssim'] > best_ssim:
             no_improve_epochs = 0
-            torch.save({
-                'epoch': epoch,
-                'generator_state_dict': generator.state_dict(),
-                'discriminator_state_dict': discriminator.state_dict(),
-                'optimizer_G_state_dict': optimizer_G.state_dict(),
-                'optimizer_D_state_dict': optimizer_D.state_dict(),
-                'loss_G': avg_loss_G,
-                'loss_D': avg_loss_D,
-                'ssim': metrics['ssim'],
-                'recall': metrics['recall'],
-                'f1': metrics['f1'],
-                'precision': metrics['precision'],
-                'psnr': metrics['psnr'],
-                'jaccard': metrics['jaccard']
-            }, 'best_checkpoint.pth')
+            if val_loss_G < best_loss:
+                best_loss = val_loss_G
+            if metrics['ssim'] > best_ssim:
+                best_ssim = metrics['ssim']
+            torch.save(generator.state_dict(), 'prime_generator.pth')
+            torch.save(discriminator.state_dict(), 'prime_discriminator.pth')
+            print(f"[Prime Model at Epoch {epoch}/{num_epochs}] "
+                  f"[D loss: {avg_loss_D:.3f}] [G loss: {avg_loss_G:.3f}] "
+                  f"[Val G loss: {val_loss_G:.3f}] "
+                  f"[Precision: {metrics['precision']:.3f}] "
+                  f"[Recall: {metrics['recall']:.3f}] [F1 Score: {metrics['f1']:.3f}] "
+                  f"[Jaccard: {metrics['jaccard']:.3f}] "
+                  f"[PSNR: {metrics['psnr']:.3f}] [SSIM: {metrics['ssim']:.3f}] ")
         else:
             no_improve_epochs += 1
 

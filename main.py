@@ -8,8 +8,8 @@ from utils.utils import weights_init_normal
 from train import train
 
 if __name__ == "__main__":
-    batch_size = 32
-    val_batch_size = 32
+    batch_size = 64
+    val_batch_size = 64
     num_epochs = 100
     image_size = 256
 
@@ -46,4 +46,4 @@ if __name__ == "__main__":
     torch.save(trained_generator.state_dict(), 'generator.pth')
     torch.save(trained_discriminator.state_dict(), 'discriminator.pth')
 
-    print("Training complete. Models saved.")
+    print("Training complete. Last epoch's models saved..")
