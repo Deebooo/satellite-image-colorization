@@ -46,4 +46,4 @@ if __name__ == "__main__":
     torch.save(trained_generator.state_dict(), 'generator.pth')
     torch.save(trained_discriminator.state_dict(), 'discriminator.pth')
 
-    print("Training complete. Last epoch's models saved..")
+    print("Training complete. Last epoch's models saved.")

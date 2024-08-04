@@ -1,36 +1,46 @@
+import random
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from tqdm import tqdm
 from utils.metrics import calculate_metrics
 from utils.visualization import save_sample_images
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 def validate(generator, discriminator, dataloader, criterion_GAN, criterion_pixelwise, device, lambda_pixel):
     generator.eval()
     discriminator.eval()
     total_loss_G = 0
+    total_loss_D = 0
 
     with torch.no_grad():
         for grayscale, real_color in dataloader:
             grayscale = grayscale.to(device)
             real_color = real_color.to(device)
             valid = torch.ones((grayscale.size(0), 1, 15, 15), requires_grad=False).to(device)
+            fake = torch.zeros((grayscale.size(0), 1, 15, 15), requires_grad=False).to(device)
 
             gen_color = generator(grayscale)
             pred_fake = discriminator(grayscale, gen_color)
+            pred_real = discriminator(grayscale, real_color)
 
             loss_GAN = criterion_GAN(pred_fake, valid)
             loss_pixel = criterion_pixelwise(gen_color, real_color)
             loss_G = loss_GAN + lambda_pixel * loss_pixel
 
+            loss_real = criterion_GAN(pred_real, valid)
+            loss_fake = criterion_GAN(pred_fake, fake)
+            loss_D = 0.5 * (loss_real + loss_fake)
+
             total_loss_G += loss_G.item()
+            total_loss_D += loss_D.item()
 
     metrics = calculate_metrics(generator, dataloader, device)
 
     generator.train()
     discriminator.train()
 
-    return total_loss_G / len(dataloader), metrics
+    return total_loss_G / len(dataloader), total_loss_D / len(dataloader), metrics
 
 
 def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs, device):
@@ -45,8 +55,11 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
         print(f"Using {torch.cuda.device_count()} GPUs for data parallelism for discriminator.")
         discriminator = nn.DataParallel(discriminator)
 
-    optimizer_G = optim.Adam(generator.parameters(), lr=0.0002, betas=(0.5, 0.999))         # was 0.0002
-    optimizer_D = optim.Adam(discriminator.parameters(), lr=0.0002, betas=(0.5, 0.999))     # was 0.0002
+    optimizer_G = optim.Adam(generator.parameters(), lr=0.0002, betas=(0.5, 0.999))
+    optimizer_D = optim.Adam(discriminator.parameters(), lr=0.0002, betas=(0.5, 0.999))
+
+    scheduler_G = ReduceLROnPlateau(optimizer_G, mode='min', factor=0.5, patience=10, verbose=True)
+    scheduler_D = ReduceLROnPlateau(optimizer_D, mode='min', factor=0.5, patience=10, verbose=True)
 
     criterion_GAN = nn.MSELoss()
     criterion_pixelwise = nn.L1Loss()
@@ -55,8 +68,14 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
     early_stopping_patience = 20
     no_improve_epochs = 0
 
-    best_loss = float('inf')
-    best_ssim = float('-inf')
+    best_composite_score = float('-inf')
+
+    # Randomly select 3 fixed images for plotting
+    fixed_images = next(iter(val_dataloader))
+    fixed_grayscale, fixed_real_color = fixed_images
+    indices = random.sample(range(fixed_grayscale.size(0)), 3)
+    fixed_grayscale = fixed_grayscale[indices].to(device)
+    fixed_real_color = fixed_real_color[indices].to(device)
 
     for epoch in range(num_epochs):
         generator.train()
@@ -105,28 +124,32 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
         avg_loss_G = total_loss_G / len(train_dataloader)
         avg_loss_D = total_loss_D / len(train_dataloader)
 
-        val_loss_G, metrics = validate(generator, discriminator, val_dataloader, criterion_GAN, criterion_pixelwise,
+        val_loss_G, val_loss_D, metrics = validate(generator, discriminator, val_dataloader, criterion_GAN, criterion_pixelwise,
                                        device, lambda_pixel)
+
+        # Update schedulers
+        scheduler_G.step(val_loss_G)
+        scheduler_D.step(val_loss_D)
 
         print(f"[Epoch {epoch}/{num_epochs}] "
               f"[D loss: {avg_loss_D:.3f}] [G loss: {avg_loss_G:.3f}] "
-              f"[Val G loss: {val_loss_G:.3f}] "
+              f"[Val G loss: {val_loss_G:.3f}] [Val D loss: {val_loss_D:.3f}]"
               f"[Precision: {metrics['precision']:.3f}] "
               f"[Recall: {metrics['recall']:.3f}] [F1 Score: {metrics['f1']:.3f}] "
               f"[Jaccard: {metrics['jaccard']:.3f}] "
               f"[PSNR: {metrics['psnr']:.3f}] [SSIM: {metrics['ssim']:.3f}] ")
 
-        if val_loss_G < best_loss or metrics['ssim'] > best_ssim:
+        # Calculate composite score
+        composite_score = 1 / (val_loss_G + 1e-8) + 1 / (val_loss_D + 1e-8)
+
+        if composite_score > best_composite_score:
+            best_composite_score = composite_score
             no_improve_epochs = 0
-            if val_loss_G < best_loss:
-                best_loss = val_loss_G
-            if metrics['ssim'] > best_ssim:
-                best_ssim = metrics['ssim']
             torch.save(generator.state_dict(), 'prime_generator.pth')
             torch.save(discriminator.state_dict(), 'prime_discriminator.pth')
-            print(f"[Prime Model at Epoch {epoch}/{num_epochs}] "
+            print(f"[---> Prime models at Epoch {epoch}/{num_epochs}] "
                   f"[D loss: {avg_loss_D:.3f}] [G loss: {avg_loss_G:.3f}] "
-                  f"[Val G loss: {val_loss_G:.3f}] "
+                  f"[Val G loss: {val_loss_G:.3f}] [Val D loss: {val_loss_D:.3f}]"
                   f"[Precision: {metrics['precision']:.3f}] "
                   f"[Recall: {metrics['recall']:.3f}] [F1 Score: {metrics['f1']:.3f}] "
                   f"[Jaccard: {metrics['jaccard']:.3f}] "
@@ -138,7 +161,7 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
             print(f"Early stopping triggered after {early_stopping_patience} epochs without improvement.")
             break
 
-        if epoch % 3 == 0:
-            save_sample_images(generator, grayscale, real_color, epoch)
+        if epoch % 1 == 0:
+            save_sample_images(generator, fixed_grayscale, fixed_real_color, epoch, metrics, val_loss_G, val_loss_D)
 
     return generator, discriminator
