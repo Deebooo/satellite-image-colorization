@@ -141,7 +141,7 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
               f"[PSNR: {metrics['psnr']:.3f}] [SSIM: {metrics['ssim']:.3f}] ")
 
         # Calculate composite score
-        composite_score = 1 / (val_loss_G + 1e-8) + 1 / (val_loss_D + 1e-8)
+        composite_score = 1 / (val_loss_G + 1e-8)
 
         if composite_score > best_composite_score:
             best_composite_score = composite_score
