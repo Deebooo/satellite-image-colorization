@@ -5,7 +5,6 @@ from torchmetrics.functional import recall as recall_metric
 from torchmetrics.functional import f1_score as f1_score_metric
 from torchmetrics.functional import accuracy as accuracy_metric
 from torchmetrics.image import StructuralSimilarityIndexMeasure
-from tqdm import tqdm
 import torch.nn.functional as F
 
 def calculate_metrics(generator, dataloader, device):
