@@ -21,7 +21,7 @@ def calculate_metrics(generator, dataloader, device):
     generator.eval()
 
     with torch.no_grad():
-        for grayscale, real_color in tqdm(dataloader):
+        for grayscale, real_color in dataloader:
             grayscale = grayscale.to(device)
             real_color = real_color.to(device)
 
