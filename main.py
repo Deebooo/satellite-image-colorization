@@ -43,7 +43,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"An error occurred during training: {e}")
 
-    torch.save(trained_generator.state_dict(), 'generator.pth')
-    torch.save(trained_discriminator.state_dict(), 'discriminator.pth')
+    # torch.save(trained_generator.state_dict(), 'generator.pth')
+    # torch.save(trained_discriminator.state_dict(), 'discriminator.pth')
 
-    print("Training complete. Last epoch's models saved.")
+    print("Training complete.")

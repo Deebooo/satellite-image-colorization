@@ -15,7 +15,7 @@ def save_sample_images(generator, fixed_grayscale, fixed_real_color, epoch, metr
     gen_color = (gen_color * 0.5 + 0.5).cpu().numpy()
 
     metrics_text = (f"Precision: {metrics['precision']:.3f} | Recall: {metrics['recall']:.3f} | "
-                    f"F1 Score: {metrics['f1']:.3f} | Jaccard: {metrics['jaccard']:.3f} | "
+                    f"F1 Score: {metrics['f1']:.3f} | "
                     f"PSNR: {metrics['psnr']:.3f} | SSIM: {metrics['ssim']:.3f} | "
                     f"Val G loss: {val_loss_G:.3f} | Val D loss: {val_loss_D:.3f}")
 

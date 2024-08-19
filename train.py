@@ -56,16 +56,16 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
         discriminator = nn.DataParallel(discriminator)
 
     optimizer_G = optim.Adam(generator.parameters(), lr=0.0002, betas=(0.5, 0.999))
-    optimizer_D = optim.Adam(discriminator.parameters(), lr=0.0002, betas=(0.5, 0.999))
+    optimizer_D = optim.Adam(discriminator.parameters(), lr=0.0001, betas=(0.5, 0.999))
 
-    scheduler_G = ReduceLROnPlateau(optimizer_G, mode='min', factor=0.5, patience=10, verbose=True)
-    scheduler_D = ReduceLROnPlateau(optimizer_D, mode='min', factor=0.5, patience=10, verbose=True)
+    scheduler_G = ReduceLROnPlateau(optimizer_G, mode='min', factor=0.8, patience=10)
+    scheduler_D = ReduceLROnPlateau(optimizer_D, mode='min', factor=0.8, patience=10)
 
     criterion_GAN = nn.MSELoss()
     criterion_pixelwise = nn.L1Loss()
 
-    lambda_pixel = 100
-    early_stopping_patience = 20
+    lambda_pixel = 80
+    early_stopping_patience = 10
     no_improve_epochs = 0
 
     best_composite_score = float('-inf')
@@ -130,13 +130,14 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
         # Update schedulers
         scheduler_G.step(val_loss_G)
         scheduler_D.step(val_loss_D)
+        current_lr_G = scheduler_G.get_last_lr()[0]
+        current_lr_D = scheduler_D.get_last_lr()[0]
 
-        print(f"[Epoch {epoch}/{num_epochs}] "
+        print(f"[Epoch {epoch}/{num_epochs}] with lr_G={current_lr_G} & lr_D={current_lr_D}, "
               f"[D loss: {avg_loss_D:.3f}] [G loss: {avg_loss_G:.3f}] "
               f"[Val G loss: {val_loss_G:.3f}] [Val D loss: {val_loss_D:.3f}]"
               f"[Precision: {metrics['precision']:.3f}] "
               f"[Recall: {metrics['recall']:.3f}] [F1 Score: {metrics['f1']:.3f}] "
-              f"[Jaccard: {metrics['jaccard']:.3f}] "
               f"[PSNR: {metrics['psnr']:.3f}] [SSIM: {metrics['ssim']:.3f}] ")
 
         # Calculate composite score
@@ -152,7 +153,6 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
                   f"[Val G loss: {val_loss_G:.3f}] [Val D loss: {val_loss_D:.3f}]"
                   f"[Precision: {metrics['precision']:.3f}] "
                   f"[Recall: {metrics['recall']:.3f}] [F1 Score: {metrics['f1']:.3f}] "
-                  f"[Jaccard: {metrics['jaccard']:.3f}] "
                   f"[PSNR: {metrics['psnr']:.3f}] [SSIM: {metrics['ssim']:.3f}] ")
         else:
             no_improve_epochs += 1

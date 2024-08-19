@@ -3,7 +3,6 @@ import numpy as np
 from torchmetrics.functional import precision as precision_metric
 from torchmetrics.functional import recall as recall_metric
 from torchmetrics.functional import f1_score as f1_score_metric
-from torchmetrics.functional import jaccard_index as jaccard_metric
 from torchmetrics.functional import accuracy as accuracy_metric
 from torchmetrics.image import StructuralSimilarityIndexMeasure
 from tqdm import tqdm
@@ -15,7 +14,6 @@ def calculate_metrics(generator, dataloader, device):
     f1s = []
     ssim_scores = []
     psnr_values = []
-    jaccard_scores = []
     accuracies = []
 
     ssim = StructuralSimilarityIndexMeasure(data_range=1.0).to(device)
@@ -33,11 +31,10 @@ def calculate_metrics(generator, dataloader, device):
             real_binary = (real_color > 0.5).float()
             gen_binary = (gen_color > 0.5).float()
 
-            # Calculate precision, recall, F1 score, Jaccard index, and accuracy using torchmetrics
+            # Calculate precision, recall, F1 score using torchmetrics
             precision = precision_metric(gen_binary, real_binary, task='binary').to(device)
             recall = recall_metric(gen_binary, real_binary, task='binary').to(device)
             f1 = f1_score_metric(gen_binary, real_binary, task="binary").to(device)
-            jaccard = jaccard_metric(gen_binary, real_binary, task="binary").to(device)
             accuracy = accuracy_metric(gen_binary, real_binary, task="binary").to(device)
 
             # Calculate SSIM using torchmetrics
@@ -46,7 +43,6 @@ def calculate_metrics(generator, dataloader, device):
             precisions.append(precision.item())
             recalls.append(recall.item())
             f1s.append(f1.item())
-            jaccard_scores.append(jaccard.item())
             accuracies.append(accuracy.item())
             ssim_scores.append(ssim_score.item())
 
@@ -64,5 +60,4 @@ def calculate_metrics(generator, dataloader, device):
         'f1': torch.mean(torch.tensor(f1s)).item(),
         'psnr': np.mean(psnr_values),
         'ssim': final_ssim.item(),
-        'jaccard': torch.mean(torch.tensor(jaccard_scores)).item()
     }
