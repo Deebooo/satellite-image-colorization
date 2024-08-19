@@ -58,13 +58,13 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
     optimizer_G = optim.Adam(generator.parameters(), lr=0.0002, betas=(0.5, 0.999))
     optimizer_D = optim.Adam(discriminator.parameters(), lr=0.0001, betas=(0.5, 0.999))
 
-    scheduler_G = ReduceLROnPlateau(optimizer_G, mode='min', factor=0.8, patience=10)
-    scheduler_D = ReduceLROnPlateau(optimizer_D, mode='min', factor=0.8, patience=10)
+    scheduler_G = ReduceLROnPlateau(optimizer_G, mode='min', factor=0.75, patience=10)
+    scheduler_D = ReduceLROnPlateau(optimizer_D, mode='min', factor=0.75, patience=10)
 
     criterion_GAN = nn.MSELoss()
     criterion_pixelwise = nn.L1Loss()
 
-    lambda_pixel = 80
+    lambda_pixel = 85
     early_stopping_patience = 10
     no_improve_epochs = 0
 
