@@ -58,8 +58,8 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
     optimizer_G = optim.Adam(generator.parameters(), lr=0.00025, betas=(0.5, 0.999))
     optimizer_D = optim.Adam(discriminator.parameters(), lr=0.00005, betas=(0.5, 0.999))
 
-    scheduler_G = ReduceLROnPlateau(optimizer_G, mode='min', factor=0.75, patience=5)
-    scheduler_D = ReduceLROnPlateau(optimizer_D, mode='min', factor=0.75, patience=5)
+    # scheduler_G = ReduceLROnPlateau(optimizer_G, mode='min', factor=0.75, patience=5)
+    # scheduler_D = ReduceLROnPlateau(optimizer_D, mode='min', factor=0.75, patience=5)
 
     criterion_GAN = nn.MSELoss()
     criterion_pixelwise = nn.L1Loss()
@@ -128,12 +128,12 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
                                        device, lambda_pixel)
 
         # Update schedulers
-        scheduler_G.step(val_loss_G)
-        scheduler_D.step(val_loss_D)
-        current_lr_G = scheduler_G.get_last_lr()[0]
-        current_lr_D = scheduler_D.get_last_lr()[0]
+        # scheduler_G.step(val_loss_G)
+        # scheduler_D.step(val_loss_D)
+        # current_lr_G = scheduler_G.get_last_lr()[0]
+        # current_lr_D = scheduler_D.get_last_lr()[0]
 
-        print(f"[Epoch {epoch}/{num_epochs}] with lr_G={current_lr_G} & lr_D={current_lr_D}, "
+        print(f"[Epoch {epoch}/{num_epochs}] "
               f"[D loss: {avg_loss_D:.3f}] [G loss: {avg_loss_G:.3f}] "
               f"[Val G loss: {val_loss_G:.3f}] [Val D loss: {val_loss_D:.3f}]"
               f"[Precision: {metrics['precision']:.3f}] "
