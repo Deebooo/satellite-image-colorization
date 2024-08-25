@@ -64,7 +64,7 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
     criterion_GAN = nn.MSELoss()
     criterion_pixelwise = nn.L1Loss()
 
-    lambda_pixel = 85
+    lambda_pixel = 100
     early_stopping_patience = 10
     no_improve_epochs = 0
 
