@@ -18,9 +18,6 @@ def save_sample_images(generator, fixed_l_channel, fixed_real_ab, epoch, metrics
     for i in range(3):
         sample_save_dir = os.path.join(save_dir, f'sample_{i}')
 
-        real_rgb = lab2rgb(fixed_l_channel[i].unsqueeze(0), fixed_real_ab[i].unsqueeze(0))
-        gen_rgb = lab2rgb(fixed_l_channel[i].unsqueeze(0), gen_ab[i].unsqueeze(0))
-
         metrics_text = (f"Precision: {metrics['precision']:.3f} | Recall: {metrics['recall']:.3f} | "
                         f"F1 Score: {metrics['f1']:.3f} | "
                         f"PSNR: {metrics['psnr']:.3f} | SSIM: {metrics['ssim']:.3f} | "
