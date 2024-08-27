@@ -1,5 +1,6 @@
 import os
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
 from utils.lab2rgb import lab2rgb
 
@@ -10,7 +11,9 @@ def save_sample_images(generator, fixed_l_channel, fixed_real_ab, epoch, metrics
     with torch.no_grad():
         gen_ab = generator(fixed_l_channel)
 
-    fixed_l_channel_np = (fixed_l_channel * 50.0 + 50.0).cpu().numpy()
+    # Convert LAB to RGB using the corrected lab2rgb function
+    fixed_real_rgb = lab2rgb(fixed_l_channel, fixed_real_ab)
+    gen_rgb = lab2rgb(fixed_l_channel, gen_ab)
 
     for i in range(3):
         sample_save_dir = os.path.join(save_dir, f'sample_{i}')
@@ -27,17 +30,17 @@ def save_sample_images(generator, fixed_l_channel, fixed_real_ab, epoch, metrics
         fig.suptitle(f'Epoch {epoch}', fontsize=16)
 
         ax1 = fig.add_subplot(2, 2, 1)
-        ax1.imshow(fixed_l_channel_np[i][0], cmap='gray')
+        ax1.imshow(fixed_l_channel[i][0].cpu().numpy() * 50 + 50, cmap='gray')
         ax1.set_title('Input (L channel)')
         ax1.axis('off')
 
         ax2 = fig.add_subplot(2, 2, 2)
-        ax2.imshow(real_rgb)
+        ax2.imshow(fixed_real_rgb[i].astype(np.uint8))
         ax2.set_title('Real (Color)')
         ax2.axis('off')
 
         ax3 = fig.add_subplot(2, 1, 2)
-        ax3.imshow(gen_rgb)
+        ax3.imshow(gen_rgb[i].astype(np.uint8))
         ax3.set_title('Generated (Color)')
         ax3.axis('off')
 

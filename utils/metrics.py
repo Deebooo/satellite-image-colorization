@@ -27,13 +27,13 @@ def calculate_metrics(generator, dataloader, device):
 
             gen_ab = generator(l_channel)
 
-            # Convert LAB to RGB using the provided lab2rgb function
+            # Convert LAB to RGB using the corrected lab2rgb function
             real_rgb = lab2rgb(l_channel, real_ab)
             gen_rgb = lab2rgb(l_channel, gen_ab)
 
             # Convert numpy arrays to torch tensors
-            real_rgb_tensor = torch.from_numpy(real_rgb).permute(2, 0, 1).float().to(device) / 255.0
-            gen_rgb_tensor = torch.from_numpy(gen_rgb).permute(2, 0, 1).float().to(device) / 255.0
+            real_rgb_tensor = torch.from_numpy(real_rgb).permute(0, 3, 1, 2).float().to(device) / 255.0
+            gen_rgb_tensor = torch.from_numpy(gen_rgb).permute(0, 3, 1, 2).float().to(device) / 255.0
 
             # Calculate metrics as before but now using the RGB tensors
             real_binary = (real_rgb_tensor > 0.5).float()
