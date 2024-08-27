@@ -21,25 +21,32 @@ def calculate_metrics(generator, dataloader, device):
     generator.eval()
 
     with torch.no_grad():
-        for grayscale, real_ab in dataloader:
-            grayscale = grayscale.to(device)
+        for l_channel, real_ab in dataloader:
+            l_channel = l_channel.to(device)
             real_ab = real_ab.to(device)
 
-            gen_ab = generator(grayscale)
+            gen_ab = generator(l_channel)
 
             # Convert LAB to RGB for metric calculation
-            grayscale_np = grayscale.cpu().numpy().astype(np.float32)
-            real_ab_np = real_ab.cpu().numpy().astype(np.float32)
-            gen_ab_np = gen_ab.cpu().numpy().astype(np.float32)
+            l_channel_np = l_channel.cpu().numpy() * 50.0 + 50.0
+            real_ab_np = real_ab.cpu().numpy() * 128.0
+            gen_ab_np = gen_ab.cpu().numpy() * 128.0
 
-            real_lab = np.concatenate([grayscale_np, real_ab_np], axis=1)
-            gen_lab = np.concatenate([grayscale_np, gen_ab_np], axis=1)
+            """
+            # Convert LAB to RGB for metric calculation
+            l_channel_np = l_channel.cpu().numpy() * 50.0  # Rescale L channel back to [0, 100]
+            real_ab_np = (real_ab.cpu().numpy() + 1.0) * 128.0  # Rescale AB channels back to [-128, 127]
+            gen_ab_np = (gen_ab.cpu().numpy() + 1.0) * 128.0
+            """
 
-            real_rgb = cv2.cvtColor(real_lab, cv2.COLOR_LAB2RGB)
-            gen_rgb = cv2.cvtColor(gen_lab, cv2.COLOR_LAB2RGB)
+            real_lab = np.concatenate([l_channel_np, real_ab_np], axis=1)
+            gen_lab = np.concatenate([l_channel_np, gen_ab_np], axis=1)
 
-            real_rgb_tensor = torch.tensor(real_rgb).permute(2, 0, 1).float().to(device)
-            gen_rgb_tensor = torch.tensor(gen_rgb).permute(2, 0, 1).float().to(device)
+            real_rgb = cv2.cvtColor(real_lab.transpose(1, 2, 0), cv2.COLOR_LAB2RGB)
+            gen_rgb = cv2.cvtColor(gen_lab.transpose(1, 2, 0), cv2.COLOR_LAB2RGB)
+
+            real_rgb_tensor = torch.from_numpy(real_rgb).permute(2, 0, 1).float().to(device)
+            gen_rgb_tensor = torch.from_numpy(gen_rgb).permute(2, 0, 1).float().to(device)
 
             # Calculate metrics as before but now using the RGB tensors
             real_binary = (real_rgb_tensor > 0.5).float()

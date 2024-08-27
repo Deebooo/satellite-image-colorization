@@ -36,5 +36,8 @@ class SatelliteImageDataset(Dataset):
             l_channel = self.transform(l_channel)
             ab_channels = self.transform(ab_channels)
 
-        grayscale = transforms.Grayscale()(l_channel)
-        return grayscale, ab_channels
+        # Normalize L channel to [-1, 1] and AB channels to [-1, 1]
+        l_channel = (l_channel - 50) / 50
+        ab_channels = ab_channels / 128 # ab_channels = (ab_channels / 128.0) - 1.0
+
+        return l_channel.float(), ab_channels.float()

@@ -19,10 +19,6 @@ if __name__ == "__main__":
     transform = transforms.Compose([
         transforms.Resize((image_size, image_size)),
         transforms.ToTensor(),
-        # Normalizing LAB images
-        # L channel range is [0, 100], we normalize it to [-1, 1]
-        # A and B channels range is [-128, 127], we normalize them to [-1, 1]
-        transforms.Normalize((50.0, 0.0, 0.0), (50.0, 128.0, 128.0)) # Mean and Std Dev for LAB normalization
     ])
 
     dataset = SatelliteImageDataset("/local_disk/helios/skhelil/fichiers/images_satt/tiles", transform=transform)

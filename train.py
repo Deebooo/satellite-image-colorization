@@ -87,17 +87,17 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
         with tqdm(train_dataloader, unit="batch") as tepoch:
             tepoch.set_description(f"Epoch {epoch + 1}/{num_epochs}")
 
-            for grayscale, real_ab in tepoch:
-                grayscale = grayscale.to(device)
+            for l_channel, real_ab in tepoch:
+                l_channel = l_channel.to(device)
                 real_ab = real_ab.to(device)
 
-                valid = torch.ones((grayscale.size(0), 1, 15, 15), requires_grad=False).to(device)
-                fake = torch.zeros((grayscale.size(0), 1, 15, 15), requires_grad=False).to(device)
+                valid = torch.ones((l_channel.size(0), 1, 15, 15), requires_grad=False).to(device)
+                fake = torch.zeros((l_channel.size(0), 1, 15, 15), requires_grad=False).to(device)
 
                 # Train Generator
                 optimizer_G.zero_grad()
-                gen_ab = generator(grayscale)
-                pred_fake = discriminator(grayscale, gen_ab)
+                gen_ab = generator(l_channel)
+                pred_fake = discriminator(l_channel, gen_ab)
                 loss_GAN = criterion_GAN(pred_fake, valid)
                 loss_pixel = criterion_pixelwise(gen_ab, real_ab)
                 loss_G = loss_GAN + lambda_pixel * loss_pixel
@@ -108,9 +108,9 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
 
                 # Train Discriminator
                 optimizer_D.zero_grad()
-                pred_real = discriminator(grayscale, real_ab)
+                pred_real = discriminator(l_channel, real_ab)
                 loss_real = criterion_GAN(pred_real, valid)
-                pred_fake = discriminator(grayscale, gen_ab.detach())
+                pred_fake = discriminator(l_channel, gen_ab.detach())
                 loss_fake = criterion_GAN(pred_fake, fake)
                 loss_D = 0.5 * (loss_real + loss_fake)
                 loss_D.backward()
