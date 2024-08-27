@@ -1,5 +1,6 @@
 import os
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
 from utils.lab2rgb import lab2rgb
 
@@ -31,12 +32,12 @@ def save_sample_images(generator, fixed_l_channel, fixed_real_ab, epoch, metrics
         ax1.axis('off')
 
         ax2 = fig.add_subplot(2, 2, 2)
-        ax2.imshow(fixed_real_rgb[i].cpu().numpy())
+        ax2.imshow(np.transpose(fixed_real_rgb[i], (1, 2, 0)))
         ax2.set_title('Real (Color)')
         ax2.axis('off')
 
         ax3 = fig.add_subplot(2, 1, 2)
-        ax3.imshow(gen_rgb[i].cpu().numpy())
+        ax3.imshow(np.transpose(gen_rgb[i], (1, 2, 0)))
         ax3.set_title('Generated (Color)')
         ax3.axis('off')
 
