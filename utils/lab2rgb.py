@@ -12,6 +12,9 @@ def lab2rgb(L, AB):
     L = (L + 1) * 50  # Map L from [-1, 1] to [0, 100]
     AB = AB * 128     # Map AB from [-1, 1] to [-128, 128]
 
+    L = torch.clamp((L + 1) * 50, 0, 100)
+    AB = torch.clamp(AB * 128, -128, 127)
+
     # Stack the channels to get a LAB image
     lab_image = torch.cat([L, AB], dim=1)
 
