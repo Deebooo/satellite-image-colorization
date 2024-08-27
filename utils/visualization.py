@@ -27,17 +27,17 @@ def save_sample_images(generator, fixed_l_channel, fixed_real_ab, epoch, metrics
         fig.suptitle(f'Epoch {epoch}', fontsize=16)
 
         ax1 = fig.add_subplot(2, 2, 1)
-        ax1.imshow(fixed_l_channel[i][0].cpu().numpy() * 50, cmap='gray')
+        ax1.imshow(fixed_l_channel[i][0].cpu().numpy() * 50 + 50, cmap='gray')
         ax1.set_title('Input (L channel)')
         ax1.axis('off')
 
         ax2 = fig.add_subplot(2, 2, 2)
-        ax2.imshow(np.transpose(fixed_real_rgb[i], (1, 2, 0)))
+        ax2.imshow(fixed_real_rgb[i].permute(1, 2, 0).cpu().numpy())
         ax2.set_title('Real (Color)')
         ax2.axis('off')
 
         ax3 = fig.add_subplot(2, 1, 2)
-        ax3.imshow(np.transpose(gen_rgb[i], (1, 2, 0)))
+        ax3.imshow(gen_rgb[i].permute(1, 2, 0).cpu().numpy())
         ax3.set_title('Generated (Color)')
         ax3.axis('off')
 
