@@ -27,7 +27,7 @@ def save_sample_images(generator, fixed_l_channel, fixed_real_ab, epoch, metrics
         fig.suptitle(f'Epoch {epoch}', fontsize=16)
 
         ax1 = fig.add_subplot(2, 2, 1)
-        ax1.imshow(fixed_l_channel[i][0].cpu().numpy() * 50 + 50, cmap='gray')
+        ax1.imshow(fixed_l_channel[i][0].cpu().numpy() * 50, cmap='gray')
         ax1.set_title('Input (L channel)')
         ax1.axis('off')
 
