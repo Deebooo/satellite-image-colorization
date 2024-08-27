@@ -21,7 +21,7 @@ if __name__ == "__main__":
         transforms.ToTensor(),
     ])
 
-    dataset = SatelliteImageDataset("/local_disk/helios/skhelil/fichiers/images_satt/tiles", transform=transform)
+    dataset = SatelliteImageDataset("/local_disk/helios/skhelil/fichiers/images_satt/tiles_2", transform=transform)
 
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size
