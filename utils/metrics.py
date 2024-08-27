@@ -32,6 +32,11 @@ def calculate_metrics(generator, dataloader, device):
             real_rgb = lab2rgb(l_channel, real_ab)
             gen_rgb = lab2rgb(l_channel, gen_ab)
 
+            # Ensure tensors are correctly shaped
+            if real_rgb.shape != gen_rgb.shape:
+                print(f"Shape mismatch: real_rgb {real_rgb.shape}, gen_rgb {gen_rgb.shape}")
+                continue
+
             # Calculate metrics using RGB images
             real_binary = (real_rgb > 0.5).float()
             gen_binary = (gen_rgb > 0.5).float()
