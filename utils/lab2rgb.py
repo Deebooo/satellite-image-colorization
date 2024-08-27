@@ -13,10 +13,15 @@ def lab2rgb(L, AB):
     L = L.squeeze().cpu().numpy().astype(np.float32)
     AB = AB.squeeze().cpu().numpy().astype(np.float32)
 
+    # Ensure AB has the correct shape (2, height, width)
+    if AB.ndim == 2:
+        AB = np.expand_dims(AB, axis=0)
+
     # Stack L and AB channels to form a LAB image
     lab_image = np.zeros((L.shape[0], L.shape[1], 3), dtype=np.float32)
     lab_image[:, :, 0] = L
-    lab_image[:, :, 1:] = AB
+    lab_image[:, :, 1] = AB[0, :, :]
+    lab_image[:, :, 2] = AB[1, :, :]
 
     # Convert LAB image to RGB using OpenCV
     rgb_image = cv2.cvtColor(lab_image, cv2.COLOR_LAB2RGB)
