@@ -1,8 +1,7 @@
 import os
 import matplotlib.pyplot as plt
-import numpy as np
 import torch
-import cv2
+from utils.lab2rgb import lab2rgb
 
 def save_sample_images(generator, fixed_l_channel, fixed_real_ab, epoch, metrics, val_loss_G, val_loss_D):
     save_dir = '/local_disk/helios/skhelil/fichiers/Linkedin/'
@@ -12,17 +11,12 @@ def save_sample_images(generator, fixed_l_channel, fixed_real_ab, epoch, metrics
         gen_ab = generator(fixed_l_channel)
 
     fixed_l_channel_np = (fixed_l_channel * 50.0 + 50.0).cpu().numpy()
-    fixed_real_ab_np = (fixed_real_ab * 128.0).cpu().numpy()
-    gen_ab_np = (gen_ab * 128.0).cpu().numpy()
 
     for i in range(3):
         sample_save_dir = os.path.join(save_dir, f'sample_{i}')
 
-        real_lab = np.concatenate([fixed_l_channel_np[i], fixed_real_ab_np[i]], axis=0)
-        gen_lab = np.concatenate([fixed_l_channel_np[i], gen_ab_np[i]], axis=0)
-
-        real_rgb = cv2.cvtColor(real_lab.transpose(1, 2, 0), cv2.COLOR_LAB2RGB)
-        gen_rgb = cv2.cvtColor(gen_lab.transpose(1, 2, 0), cv2.COLOR_LAB2RGB)
+        real_rgb = lab2rgb(fixed_l_channel[i].unsqueeze(0), fixed_real_ab[i].unsqueeze(0))
+        gen_rgb = lab2rgb(fixed_l_channel[i].unsqueeze(0), gen_ab[i].unsqueeze(0))
 
         metrics_text = (f"Precision: {metrics['precision']:.3f} | Recall: {metrics['recall']:.3f} | "
                         f"F1 Score: {metrics['f1']:.3f} | "

@@ -6,7 +6,7 @@ from torchmetrics.functional import f1_score as f1_score_metric
 from torchmetrics.functional import accuracy as accuracy_metric
 from torchmetrics.image import StructuralSimilarityIndexMeasure
 import torch.nn.functional as F
-import cv2
+from utils.lab2rgb import lab2rgb
 
 def calculate_metrics(generator, dataloader, device):
     precisions = []
@@ -27,26 +27,13 @@ def calculate_metrics(generator, dataloader, device):
 
             gen_ab = generator(l_channel)
 
-            # Convert LAB to RGB for metric calculation
-            l_channel_np = l_channel.cpu().numpy() * 50.0 + 50.0
-            real_ab_np = real_ab.cpu().numpy() * 128.0
-            gen_ab_np = gen_ab.cpu().numpy() * 128.0
+            # Convert LAB to RGB using the provided lab2rgb function
+            real_rgb = lab2rgb(l_channel, real_ab)
+            gen_rgb = lab2rgb(l_channel, gen_ab)
 
-            """
-            # Convert LAB to RGB for metric calculation
-            l_channel_np = l_channel.cpu().numpy() * 50.0  # Rescale L channel back to [0, 100]
-            real_ab_np = (real_ab.cpu().numpy() + 1.0) * 128.0  # Rescale AB channels back to [-128, 127]
-            gen_ab_np = (gen_ab.cpu().numpy() + 1.0) * 128.0
-            """
-
-            real_lab = np.concatenate([l_channel_np, real_ab_np], axis=1)
-            gen_lab = np.concatenate([l_channel_np, gen_ab_np], axis=1)
-
-            real_rgb = cv2.cvtColor(real_lab.transpose(1, 2, 0), cv2.COLOR_LAB2RGB)
-            gen_rgb = cv2.cvtColor(gen_lab.transpose(1, 2, 0), cv2.COLOR_LAB2RGB)
-
-            real_rgb_tensor = torch.from_numpy(real_rgb).permute(2, 0, 1).float().to(device)
-            gen_rgb_tensor = torch.from_numpy(gen_rgb).permute(2, 0, 1).float().to(device)
+            # Convert numpy arrays to torch tensors
+            real_rgb_tensor = torch.from_numpy(real_rgb).permute(2, 0, 1).float().to(device) / 255.0
+            gen_rgb_tensor = torch.from_numpy(gen_rgb).permute(2, 0, 1).float().to(device) / 255.0
 
             # Calculate metrics as before but now using the RGB tensors
             real_binary = (real_rgb_tensor > 0.5).float()
