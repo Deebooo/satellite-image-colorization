@@ -1,28 +1,30 @@
 import torch
 import numpy as np
-from skimage import color
+import cv2
 
 def lab2rgb(L, AB):
-    """
-    Convert LAB channels to RGB.
-    L is expected to be in the range [-1, 1] (which maps to [0, 100] in LAB space).
-    AB is expected to be in the range [-1, 1] (which maps to [-128, 128] in LAB space).
-    The function outputs an RGB image in the range [0, 1].
-    """
-    L = (L + 1) * 50  # Map L from [-1, 1] to [0, 100]
-    AB = AB * 128     # Map AB from [-1, 1] to [-128, 128]
+    # Denormalize L channel (which was scaled to [-1, 1] and originally in range [0, 100])
+    L = (L + 1) * 50.0  # Now L should be in [0, 100]
 
-    L = torch.clamp((L + 1) * 50, 0, 100)
-    AB = torch.clamp(AB * 128, -128, 127)
+    # Denormalize AB channels (which were scaled to [-1, 1] and originally in range [-128, 127])
+    AB = AB * 128.0  # Now AB should be in [-128, 127]
 
-    # Stack the channels to get a LAB image
-    lab_image = torch.cat([L, AB], dim=1)
+    # Convert PyTorch tensors to NumPy arrays and ensure they have the right dtype
+    L = L.squeeze().cpu().numpy().astype(np.float32)
+    AB = AB.squeeze().cpu().numpy().astype(np.float32)
 
-    # Convert LAB to RGB using skimage (expects numpy array)
-    lab_image_np = lab_image.cpu().numpy().transpose((0, 2, 3, 1))  # Convert to (batch_size, height, width, channels)
-    rgb_image_np = color.lab2rgb(lab_image_np)  # Convert to RGB
+    # Stack L and AB channels to form a LAB image
+    lab_image = np.zeros((L.shape[0], L.shape[1], 3), dtype=np.float32)
+    lab_image[:, :, 0] = L
+    lab_image[:, :, 1:] = AB
 
-    # Convert back to torch tensor and reshape to match the original input dimensions
-    rgb_image = torch.tensor(rgb_image_np).permute(0, 3, 1, 2).to(L.device)
+    # Convert LAB image to RGB using OpenCV
+    rgb_image = cv2.cvtColor(lab_image, cv2.COLOR_LAB2RGB)
 
-    return rgb_image
+    # Ensure the RGB image is in the expected range of [0, 255] and dtype
+    rgb_image = np.clip(rgb_image, 0, 255).astype(np.uint8)
+
+    # Convert back to PyTorch tensor and normalize to [0, 1] if needed
+    rgb_image = torch.from_numpy(rgb_image).permute(2, 0, 1)  # Change to C x H x W format for PyTorch
+
+    return rgb_image.float() / 255.0  # Return a float tensor in the range [0, 1]

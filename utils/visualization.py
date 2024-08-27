@@ -11,8 +11,8 @@ def save_sample_images(generator, fixed_l_channel, fixed_real_ab, epoch, metrics
         gen_ab = generator(fixed_l_channel)
 
     # Convert LAB to RGB using the lab2rgb function
-    fixed_real_rgb = lab2rgb(fixed_l_channel, fixed_real_ab)
-    gen_rgb = lab2rgb(fixed_l_channel, gen_ab)
+    fixed_real_rgb = lab2rgb(fixed_l_channel, fixed_real_ab) * 255
+    gen_rgb = lab2rgb(fixed_l_channel, gen_ab) * 255
 
     for i in range(3):
         sample_save_dir = os.path.join(save_dir, f'sample_{i}')
