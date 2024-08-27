@@ -1,4 +1,6 @@
 from skimage import color
+import torch
+
 def lab2rgb(L, AB):
     """
     Convert a LAB tensor image to an RGB numpy output.
