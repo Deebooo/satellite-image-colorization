@@ -1,6 +1,5 @@
 import os
 import matplotlib.pyplot as plt
-import numpy as np
 import torch
 from utils.lab2rgb import lab2rgb
 
@@ -11,7 +10,7 @@ def save_sample_images(generator, fixed_l_channel, fixed_real_ab, epoch, metrics
     with torch.no_grad():
         gen_ab = generator(fixed_l_channel)
 
-    # Convert LAB to RGB using the corrected lab2rgb function
+    # Convert LAB to RGB using the lab2rgb function
     fixed_real_rgb = lab2rgb(fixed_l_channel, fixed_real_ab)
     gen_rgb = lab2rgb(fixed_l_channel, gen_ab)
 
@@ -32,12 +31,12 @@ def save_sample_images(generator, fixed_l_channel, fixed_real_ab, epoch, metrics
         ax1.axis('off')
 
         ax2 = fig.add_subplot(2, 2, 2)
-        ax2.imshow(fixed_real_rgb[i].astype(np.uint8))
+        ax2.imshow(fixed_real_rgb[i].cpu().numpy())
         ax2.set_title('Real (Color)')
         ax2.axis('off')
 
         ax3 = fig.add_subplot(2, 1, 2)
-        ax3.imshow(gen_rgb[i].astype(np.uint8))
+        ax3.imshow(gen_rgb[i].cpu().numpy())
         ax3.set_title('Generated (Color)')
         ax3.axis('off')
 

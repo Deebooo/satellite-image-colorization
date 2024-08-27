@@ -8,6 +8,7 @@ from torchmetrics.image import StructuralSimilarityIndexMeasure
 import torch.nn.functional as F
 from utils.lab2rgb import lab2rgb
 
+
 def calculate_metrics(generator, dataloader, device):
     precisions = []
     recalls = []
@@ -27,24 +28,20 @@ def calculate_metrics(generator, dataloader, device):
 
             gen_ab = generator(l_channel)
 
-            # Convert LAB to RGB using the corrected lab2rgb function
+            # Convert LAB to RGB using the lab2rgb function
             real_rgb = lab2rgb(l_channel, real_ab)
             gen_rgb = lab2rgb(l_channel, gen_ab)
 
-            # Convert numpy arrays to torch tensors
-            real_rgb_tensor = torch.from_numpy(real_rgb).permute(0, 3, 1, 2).float().to(device) / 255.0
-            gen_rgb_tensor = torch.from_numpy(gen_rgb).permute(0, 3, 1, 2).float().to(device) / 255.0
-
-            # Calculate metrics as before but now using the RGB tensors
-            real_binary = (real_rgb_tensor > 0.5).float()
-            gen_binary = (gen_rgb_tensor > 0.5).float()
+            # Calculate metrics using RGB images
+            real_binary = (real_rgb > 0.5).float()
+            gen_binary = (gen_rgb > 0.5).float()
 
             precision = precision_metric(gen_binary, real_binary, task='binary').to(device)
             recall = recall_metric(gen_binary, real_binary, task='binary').to(device)
             f1 = f1_score_metric(gen_binary, real_binary, task="binary").to(device)
             accuracy = accuracy_metric(gen_binary, real_binary, task="binary").to(device)
 
-            ssim_score = ssim(gen_rgb_tensor, real_rgb_tensor)
+            ssim_score = ssim(gen_rgb, real_rgb)
 
             precisions.append(precision.item())
             recalls.append(recall.item())
@@ -52,7 +49,7 @@ def calculate_metrics(generator, dataloader, device):
             accuracies.append(accuracy.item())
             ssim_scores.append(ssim_score.item())
 
-            mse = F.mse_loss(gen_rgb_tensor, real_rgb_tensor).item()
+            mse = F.mse_loss(gen_rgb, real_rgb).item()
             psnr = 20 * np.log10(1.0 / np.sqrt(mse))
             psnr_values.append(psnr)
 
