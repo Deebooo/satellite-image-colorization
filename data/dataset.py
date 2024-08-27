@@ -38,6 +38,6 @@ class SatelliteImageDataset(Dataset):
 
         # Normalize L channel to [-1, 1] and AB channels to [-1, 1]
         l_channel = (l_channel / 50) - 1
-        ab_channels = ab_channels / 128 # ab_channels = (ab_channels / 128.0) - 1.0
+        ab_channels = ab_channels / 128
 
         return l_channel.float(), ab_channels.float()
