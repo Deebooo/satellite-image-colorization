@@ -34,7 +34,7 @@ class SatelliteImageDataset(Dataset):
             l_channel = (l_channel / 50.0) - 1.0
             ab_channels = ab_channels / 128.0
 
-            # Resize
+            # Apply transformations if provided
             if self.transform:
                 l_channel = self.transform(l_channel)
                 ab_channels = self.transform(ab_channels)
@@ -47,5 +47,6 @@ class SatelliteImageDataset(Dataset):
 
         except Exception as e:
             print(f"Error processing image {img_path}: {e}")
+            return self.__getitem__((idx + 1) % len(self.image_files))  # Safely handle exceptions and move to next image
 
 
