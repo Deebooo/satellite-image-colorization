@@ -1,9 +1,9 @@
+import rasterio
 import torch
 import os
 import numpy as np
 from torch.utils.data import Dataset
-from skimage import io, color
-import torchvision.transforms as transforms
+from skimage import color
 
 class SatelliteImageDataset(Dataset):
     def __init__(self, root_dir, transform=None):
@@ -17,8 +17,9 @@ class SatelliteImageDataset(Dataset):
     def __getitem__(self, idx):
         img_path = os.path.join(self.root_dir, self.image_files[idx])
         try:
-            # Load the .tif image using skimage
-            rgb_image = io.imread(img_path)
+            with rasterio.open(img_path) as src:
+                rgb_image = src.read([1, 2, 3])
+                rgb_image = np.transpose(rgb_image, (1, 2, 0)).astype(np.uint8)
 
             # Ensure image is in float format and normalized to [0, 1]
             rgb_image = rgb_image.astype(np.float32) / 255.0
@@ -47,6 +48,6 @@ class SatelliteImageDataset(Dataset):
 
         except Exception as e:
             print(f"Error processing image {img_path}: {e}")
-            return self.__getitem__((idx + 1) % len(self.image_files))  # Safely handle exceptions and move to next image
+            return self.__getitem__((idx + 1) % len(self.image_files))
 
 
