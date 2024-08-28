@@ -3,7 +3,7 @@ import torch
 import os
 import numpy as np
 from torch.utils.data import Dataset
-from skimage import color
+from skimage import io, color
 
 class SatelliteImageDataset(Dataset):
     def __init__(self, root_dir, transform=None):
@@ -17,16 +17,17 @@ class SatelliteImageDataset(Dataset):
     def __getitem__(self, idx):
         img_path = os.path.join(self.root_dir, self.image_files[idx])
         try:
-            # rgb_image = io.imread(img_path) # Load the .tif image using skimage
+            rgb_image = io.imread(img_path) # Load the .tif image using skimage
+            '''
             with rasterio.open(img_path) as src:
                 rgb_image = src.read([1, 2, 3])
                 rgb_image = np.transpose(rgb_image, (1, 2, 0)).astype(np.float32) # Load the .tif image using rasterio`
+            '''
+            # Ensure image is in float format and normalized to [0, 1]
+            rgb_image = rgb_image.astype(np.float32) / 255.0
 
-                # Ensure image is in float format and normalized to [0, 1]
-                rgb_image = rgb_image.astype(np.float32) / 255.0
-
-                # Convert the RGB image to LAB
-                lab_image = color.rgb2lab(rgb_image)
+            # Convert the RGB image to LAB
+            lab_image = color.rgb2lab(rgb_image)
         except Exception as e:
             print(f"Error reading image {img_path}: {e}")
             return self.__getitem__((idx + 1) % len(self.image_files))
