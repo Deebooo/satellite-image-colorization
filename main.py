@@ -5,6 +5,7 @@ from models.generator import Generator
 from models.discriminator import Discriminator
 from utils.utils import weights_init_normal
 from train import train
+from torchvision import transforms
 
 if __name__ == "__main__":
     batch_size = 64
@@ -15,8 +16,13 @@ if __name__ == "__main__":
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(device)
 
+    transform = transforms.Compose([
+        transforms.Resize((image_size, image_size)),
+        transforms.ToTensor(),
+    ])
 
-    dataset = SatelliteImageDataset("/local_disk/helios/skhelil/fichiers/images_satt/tiles_2")
+    dataset = SatelliteImageDataset("/local_disk/helios/skhelil/fichiers/images_satt/tiles_2", transform=transform)
+
     # Print dataset info for verification
     print(f"Dataset length: {len(dataset)}")
     print(f"First sample shape: {dataset[0][0].shape}, {dataset[0][1].shape}")
