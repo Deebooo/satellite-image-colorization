@@ -17,8 +17,7 @@ if __name__ == "__main__":
     print(device)
 
     transform = transforms.Compose([
-        transforms.Resize((image_size, image_size)),
-        transforms.ToTensor(),
+        transforms.Resize((image_size, image_size))
     ])
 
     dataset = SatelliteImageDataset("/local_disk/helios/skhelil/fichiers/images_satt/tiles_2", transform=transform)
