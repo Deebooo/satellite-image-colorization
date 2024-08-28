@@ -29,8 +29,8 @@ def calculate_metrics(generator, dataloader, device):
             gen_ab = generator(l_channel)
 
             # Convert LAB to RGB using the lab2rgb function
-            real_rgb = lab2rgb(l_channel, real_ab)
-            gen_rgb = lab2rgb(l_channel, gen_ab)
+            real_rgb = lab2rgb(l_channel, real_ab).to(device)
+            gen_rgb = lab2rgb(l_channel, gen_ab).to(device)
 
             # Calculate metrics using RGB images
             real_binary = (real_rgb > 0.5).float()
@@ -49,11 +49,11 @@ def calculate_metrics(generator, dataloader, device):
             accuracies.append(accuracy.item())
             ssim_scores.append(ssim_score.item())
 
-            mse = F.mse_loss(gen_rgb, real_rgb).item()
-            psnr = 20 * np.log10(1.0 / np.sqrt(mse))
-            psnr_values.append(psnr)
+            mse = F.mse_loss(gen_rgb, real_rgb)
+            psnr = 20 * torch.log10(1.0 / torch.sqrt(mse))
+            psnr_values.append(psnr.item())
 
-    final_ssim = ssim.compute()
+    final_ssim = torch.mean(torch.tensor(ssim_scores)).item()
 
     return {
         'precision': torch.mean(torch.tensor(precisions)).item(),
