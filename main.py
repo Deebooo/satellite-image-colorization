@@ -24,7 +24,6 @@ if __name__ == "__main__":
 
     # Print dataset info for verification
     print(f"Dataset length: {len(dataset)}")
-    print(f"First sample shape: {dataset[0][0].shape}, {dataset[0][1].shape}")
 
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size

@@ -11,8 +11,8 @@ def save_sample_images(generator, fixed_l_channel, fixed_real_ab, epoch, metrics
         gen_ab = generator(fixed_l_channel)
 
     # Convert LAB to RGB using the lab2rgb function
-    fixed_real_rgb = lab2rgb(fixed_l_channel, fixed_real_ab) * 255
-    gen_rgb = lab2rgb(fixed_l_channel, gen_ab) * 255
+    fixed_real_rgb = lab2rgb(fixed_l_channel, fixed_real_ab)
+    gen_rgb = lab2rgb(fixed_l_channel, gen_ab)
 
     for i in range(3):
         sample_save_dir = os.path.join(save_dir, f'sample_{i}')
@@ -31,12 +31,12 @@ def save_sample_images(generator, fixed_l_channel, fixed_real_ab, epoch, metrics
         ax1.axis('off')
 
         ax2 = fig.add_subplot(2, 2, 2)
-        ax2.imshow(fixed_real_rgb[i].permute(1, 2, 0).cpu().numpy())
+        ax2.imshow(fixed_real_rgb[i].squeeze(0).permute(1, 2, 0).cpu().numpy())
         ax2.set_title('Real (Color)')
         ax2.axis('off')
 
         ax3 = fig.add_subplot(2, 1, 2)
-        ax3.imshow(gen_rgb[i].permute(1, 2, 0).cpu().numpy())
+        ax3.imshow(gen_rgb[i].squeeze(0).permute(1, 2, 0).cpu().numpy())
         ax3.set_title('Generated (Color)')
         ax3.axis('off')
 

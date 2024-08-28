@@ -39,12 +39,12 @@ class SatelliteImageDataset(Dataset):
         # Normalize L to [-1, 1] and AB to [-1, 1]
         l_channel = (l_channel / 50.0) - 1.0
         ab_channels = ab_channels / 128.0
-
+        '''
         # Apply transformations if provided
         if self.transform:
             l_channel = self.transform(l_channel)
             ab_channels = self.transform(ab_channels)
-
+        '''
         # Convert to PyTorch tensors and add channel dimensions
         l_channel = torch.from_numpy(l_channel).unsqueeze(0)
         ab_channels = torch.from_numpy(ab_channels).permute(2, 0, 1)
