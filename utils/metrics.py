@@ -49,9 +49,9 @@ def calculate_metrics(generator, dataloader, device):
             accuracies.append(accuracy.item())
             ssim_scores.append(ssim_score.item())
 
-            mse = F.mse_loss(gen_rgb, real_rgb)
-            psnr = 20 * torch.log10(1.0 / torch.sqrt(mse))
-            psnr_values.append(psnr.item())
+            mse = F.mse_loss(gen_rgb, real_rgb).item()
+            psnr = 20 * np.log10(1.0 / np.sqrt(mse))
+            psnr_values.append(psnr)
 
     final_ssim = torch.mean(torch.tensor(ssim_scores)).item()
 
@@ -60,5 +60,5 @@ def calculate_metrics(generator, dataloader, device):
         'recall': torch.mean(torch.tensor(recalls)).item(),
         'f1': torch.mean(torch.tensor(f1s)).item(),
         'psnr': np.mean(psnr_values),
-        'ssim': final_ssim.item(),
+        'ssim': final_ssim,
     }
