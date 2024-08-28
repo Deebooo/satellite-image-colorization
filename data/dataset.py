@@ -21,15 +21,15 @@ class SatelliteImageDataset(Dataset):
             with rasterio.open(img_path) as src:
                 rgb_image = src.read([1, 2, 3])
                 rgb_image = np.transpose(rgb_image, (1, 2, 0)).astype(np.float32) # Load the .tif image using rasterio`
+
+                # Ensure image is in float format and normalized to [0, 1]
+                rgb_image = rgb_image.astype(np.float32) / 255.0
+
+                # Convert the RGB image to LAB
+                lab_image = color.rgb2lab(rgb_image)
         except Exception as e:
             print(f"Error reading image {img_path}: {e}")
             return self.__getitem__((idx + 1) % len(self.image_files))
-
-        # Ensure image is in float format and normalized to [0, 1]
-        rgb_image = rgb_image.astype(np.float32) / 255.0
-
-        # Convert the RGB image to LAB
-        lab_image = color.rgb2lab(rgb_image)
 
         # Extract L and AB channels
         l_channel = lab_image[:, :, 0]
