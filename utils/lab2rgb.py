@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import cv2
 
+
 def lab2rgb(L, AB):
     # Denormalize L channel
     L = (L + 1) * 50.0

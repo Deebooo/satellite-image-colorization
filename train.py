@@ -58,14 +58,14 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
         print(f"Using {torch.cuda.device_count()} GPUs for data parallelism for discriminator.")
         discriminator = nn.DataParallel(discriminator)
 
-    optimizer_G = optim.Adam(generator.parameters(), lr=0.00002, betas=(0.5, 0.999))
+    optimizer_G = optim.Adam(generator.parameters(), lr=0.00002, betas=(0.5, 0.999)) #0.000005, #0.0001
     optimizer_D = optim.Adam(discriminator.parameters(), lr=0.000005, betas=(0.5, 0.999))
 
     criterion_GAN = nn.MSELoss()
     criterion_pixelwise = nn.L1Loss()
 
     lambda_pixel = 100
-    early_stopping_patience = 50
+    early_stopping_patience = 10
     no_improve_epochs = 0
 
     best_composite_score = float('-inf')

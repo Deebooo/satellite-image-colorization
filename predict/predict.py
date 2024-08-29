@@ -1,11 +1,10 @@
 import torch
 import torch.nn as nn
-import torchvision.transforms as transforms
-from PIL import Image
 import numpy as np
 import rasterio
 from rasterio.windows import Window
-import os
+from utils.lab2rgb import lab2rgb
+from skimage import  color
 
 
 # Generator class (same as in the training script)
@@ -28,7 +27,7 @@ class Generator(nn.Module):
                 layers.append(nn.Dropout(0.5))
             return nn.Sequential(*layers)
 
-        self.down1 = down_block(1, 64, normalize=False)
+        self.down1 = down_block(1, 64, normalize=False) # The input has 1 channel (L channel)
         self.down2 = down_block(64, 128)
         self.down3 = down_block(128, 256)
         self.down4 = down_block(256, 512)
@@ -45,7 +44,7 @@ class Generator(nn.Module):
         self.up6 = up_block(512, 128)
         self.up7 = up_block(256, 64)
         self.up8 = nn.Sequential(
-            nn.ConvTranspose2d(128, 3, kernel_size=4, stride=2, padding=1),
+            nn.ConvTranspose2d(128, 2, kernel_size=4, stride=2, padding=1),  # Output 2 channels (A and B)
             nn.Tanh()
         )
 
@@ -96,20 +95,34 @@ def load_model(model_path):
     return model, device
 
 
-def predict_tile(model, tile, device):
-    transform = transforms.Compose([
-        transforms.Grayscale(),
-        transforms.ToTensor(),
-        transforms.Normalize((0.5,), (0.5,))
-    ])
-    tile_tensor = transform(Image.fromarray(tile)).unsqueeze(0).to(device)
+def preprocess_tile(tile):
+    # Convert the tile to float and normalize to [0, 1]
+    tile = tile.astype(np.float32) / 255.0
+
+    # Convert the RGB image to LAB
+    lab_tile = color.rgb2lab(tile)
+
+    # Extract L and AB channels
+    l_channel = lab_tile[:, :, 0]
+    ab_channels = lab_tile[:, :, 1:]
+
+    # Normalize L to [-1, 1] and AB to [-1, 1]
+    l_channel = (l_channel / 50.0) - 1.0
+    ab_channels = ab_channels / 128.0
+
+    # Convert to PyTorch tensors and add channel dimensions
+    l_channel = torch.from_numpy(l_channel).unsqueeze(0).unsqueeze(0)
+    ab_channels = torch.from_numpy(ab_channels).permute(2, 0, 1).unsqueeze(0)
+
+    return l_channel, ab_channels
+
+
+def predict_tile(model, l_channel, device):
+    l_channel = l_channel.to(device)
 
     with torch.no_grad():
-        output = model(tile_tensor)
+        output = model(l_channel)
 
-    output = output.squeeze().cpu().numpy()
-    output = (output * 0.5 + 0.5) * 255
-    output = output.transpose(1, 2, 0).astype(np.uint8)
     return output
 
 
@@ -143,10 +156,20 @@ def process_geotiff(input_path, output_path, model_path, tile_size=256):
                         padded_tile[:tile.shape[0], :tile.shape[1], :] = tile
                         tile = padded_tile
 
-                    colorized_tile = predict_tile(model, tile, device)
+                    # Preprocess the tile
+                    l_channel, _ = preprocess_tile(tile)
+
+                    # Predict AB channels
+                    gen_ab = predict_tile(model, l_channel, device)
+
+                    # Convert LAB to RGB
+                    colorized_tile = lab2rgb(l_channel, gen_ab)
 
                     # Remove padding if it was added
-                    colorized_tile = colorized_tile[:window.height, :window.width, :]
+                    colorized_tile = colorized_tile[:, :window.height, :window.width, :]
+
+                    # Convert to uint8 and ensure it's in the correct shape
+                    colorized_tile = (colorized_tile.squeeze().permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)
 
                     # Write the colorized tile to the output image
                     dst.write(colorized_tile.transpose(2, 0, 1), window=window)
@@ -155,8 +178,8 @@ def process_geotiff(input_path, output_path, model_path, tile_size=256):
 
 
 if __name__ == "__main__":
-    input_geotiff_path = "/local_disk/helios/skhelil/fichiers/images_satt/pred/images/paris_bw.tif"
-    output_geotiff_path = "/local_disk/helios/skhelil/fichiers/images_satt/pred/predictions/paris_rgb.tif"
-    model_path = "/local_disk/helios/skhelil/scripts/GAN/generator.pth"
+    input_geotiff_path = "/local_disk/helios/skhelil/fichiers/images_satt/pred/images_grayscale/avignon.tif"
+    output_geotiff_path = "/local_disk/helios/skhelil/fichiers/images_satt/pred/prediction_RGB/avignon_rgb.tif"
+    model_path = "/local_disk/helios/skhelil/scripts/GAN/Models/LABV2.0/prime_generator.pth"
 
     process_geotiff(input_geotiff_path, output_geotiff_path, model_path)
