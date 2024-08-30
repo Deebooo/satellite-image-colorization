@@ -6,6 +6,8 @@ from torchmetrics.functional import f1_score as f1_score_metric
 from torchmetrics.functional import accuracy as accuracy_metric
 from torchmetrics.image import StructuralSimilarityIndexMeasure
 import torch.nn.functional as F
+from utils.lab2rgb import lab2rgb
+
 
 def calculate_metrics(generator, dataloader, device):
     precisions = []
@@ -20,24 +22,26 @@ def calculate_metrics(generator, dataloader, device):
     generator.eval()
 
     with torch.no_grad():
-        for grayscale, real_color in dataloader:
-            grayscale = grayscale.to(device)
-            real_color = real_color.to(device)
+        for l_channel, real_ab in dataloader:
+            l_channel = l_channel.to(device)
+            real_ab = real_ab.to(device)
 
-            gen_color = generator(grayscale)
+            gen_ab = generator(l_channel)
 
-            # Calculate pixel-wise metrics for the entire batch on GPU
-            real_binary = (real_color > 0.5).float()
-            gen_binary = (gen_color > 0.5).float()
+            # Convert LAB to RGB using the lab2rgb function
+            real_rgb = lab2rgb(l_channel, real_ab).to(device)
+            gen_rgb = lab2rgb(l_channel, gen_ab).to(device)
 
-            # Calculate precision, recall, F1 score using torchmetrics
+            # Calculate metrics using RGB images
+            real_binary = (real_rgb > 0.5).float()
+            gen_binary = (gen_rgb > 0.5).float()
+
             precision = precision_metric(gen_binary, real_binary, task='binary').to(device)
             recall = recall_metric(gen_binary, real_binary, task='binary').to(device)
             f1 = f1_score_metric(gen_binary, real_binary, task="binary").to(device)
             accuracy = accuracy_metric(gen_binary, real_binary, task="binary").to(device)
 
-            # Calculate SSIM using torchmetrics
-            ssim_score = ssim(gen_color, real_color)
+            ssim_score = ssim(gen_rgb, real_rgb)
 
             precisions.append(precision.item())
             recalls.append(recall.item())
@@ -45,18 +49,16 @@ def calculate_metrics(generator, dataloader, device):
             accuracies.append(accuracy.item())
             ssim_scores.append(ssim_score.item())
 
-            # Calculate PSNR for the entire batch
-            mse = F.mse_loss(gen_color, real_color).item()
+            mse = F.mse_loss(gen_rgb, real_rgb).item()
             psnr = 20 * np.log10(1.0 / np.sqrt(mse))
             psnr_values.append(psnr)
 
-    # Compute final SSIM
-    final_ssim = ssim.compute()
+    final_ssim = torch.mean(torch.tensor(ssim_scores)).item()
 
     return {
         'precision': torch.mean(torch.tensor(precisions)).item(),
         'recall': torch.mean(torch.tensor(recalls)).item(),
         'f1': torch.mean(torch.tensor(f1s)).item(),
         'psnr': np.mean(psnr_values),
-        'ssim': final_ssim.item(),
+        'ssim': final_ssim,
     }

@@ -20,7 +20,7 @@ class Generator(nn.Module):
                 layers.append(nn.Dropout(0.5))
             return nn.Sequential(*layers)
 
-        self.down1 = down_block(1, 64, normalize=False)
+        self.down1 = down_block(1, 64, normalize=False) # The input has 1 channel (L channel)
         self.down2 = down_block(64, 128)
         self.down3 = down_block(128, 256)
         self.down4 = down_block(256, 512)
@@ -37,7 +37,7 @@ class Generator(nn.Module):
         self.up6 = up_block(512, 128)
         self.up7 = up_block(256, 64)
         self.up8 = nn.Sequential(
-            nn.ConvTranspose2d(128, 3, kernel_size=4, stride=2, padding=1),
+            nn.ConvTranspose2d(128, 2, kernel_size=4, stride=2, padding=1),  # Output 2 channels (A and B)
             nn.Tanh()
         )
 

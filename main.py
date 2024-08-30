@@ -1,11 +1,11 @@
 import torch
 from torch.utils.data import DataLoader, random_split
-from torchvision import transforms
 from data.dataset import SatelliteImageDataset
 from models.generator import Generator
 from models.discriminator import Discriminator
 from utils.utils import weights_init_normal
 from train import train
+from torchvision import transforms
 
 if __name__ == "__main__":
     batch_size = 64
@@ -17,12 +17,13 @@ if __name__ == "__main__":
     print(device)
 
     transform = transforms.Compose([
-        transforms.Resize((image_size, image_size)),
-        transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        transforms.Resize((image_size, image_size))
     ])
 
-    dataset = SatelliteImageDataset("/local_disk/helios/skhelil/fichiers/images_satt/tiles", transform=transform)
+    dataset = SatelliteImageDataset("/local_disk/helios/skhelil/fichiers/images_satt/tiles_2", transform=transform)
+
+    # Print dataset info for verification
+    print(f"Dataset length: {len(dataset)}")
 
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size
@@ -42,8 +43,5 @@ if __name__ == "__main__":
                                                          num_epochs, device)
     except Exception as e:
         print(f"An error occurred during training: {e}")
-
-    # torch.save(trained_generator.state_dict(), 'generator.pth')
-    # torch.save(trained_discriminator.state_dict(), 'discriminator.pth')
 
     print("Training complete.")

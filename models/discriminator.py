@@ -13,13 +13,14 @@ class Discriminator(nn.Module):
             return layers
 
         self.model = nn.Sequential(
-            *discriminator_block(4, 64, normalization=False),
+            *discriminator_block(3, 64, normalization=False), # Input will now have 3 channels: 1 for L and 2 for AB
             *discriminator_block(64, 128),
             *discriminator_block(128, 256),
             *discriminator_block(256, 512),
             nn.Conv2d(512, 1, kernel_size=4, stride=1, padding=1)
         )
 
-    def forward(self, img_A, img_B):
-        img_input = torch.cat((img_A, img_B), 1)
+    def forward(self, img_L, img_AB):
+        # Concatenate the L channel with the AB channels
+        img_input = torch.cat((img_L, img_AB), 1)
         return self.model(img_input)
