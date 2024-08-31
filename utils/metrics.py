@@ -1,21 +1,13 @@
 import torch
 import numpy as np
-from torchmetrics.image import StructuralSimilarityIndexMeasure, PeakSignalNoiseRatio, FrechetInceptionDistance
+from torchmetrics.image import StructuralSimilarityIndexMeasure, PeakSignalNoiseRatio
 from utils.lab2rgb import lab2rgb
 from skimage import color
 
-def convert_to_uint8(tensor):
-    """
-    Converts a float32 tensor in the range [0, 1] to a uint8 tensor in the range [0, 255].
-    """
-    tensor = tensor.mul(255).clamp(0, 255).byte()  # Multiply by 255 and clamp to [0, 255]
-    return tensor
-
-
 def create_lab_image(L, AB):
     # Convert PyTorch tensors to NumPy arrays
-    L = L.cpu().numpy().astype(np.float32)
-    AB = AB.cpu().numpy().astype(np.float32)
+    L = (L.cpu().numpy().astype(np.float32) + 1.0) * 50.0  # L back to [0, 100]
+    AB = AB.cpu().numpy().astype(np.float32) * 128.0  # AB back to [-128, 128]
 
     # Initialize an empty array for the LAB image
     batch_size = L.shape[0]
@@ -35,8 +27,6 @@ def create_lab_image(L, AB):
 def calculate_metrics(generator, dataloader, device):
     ssim = StructuralSimilarityIndexMeasure(data_range=1.0).to(device)
     psnr = PeakSignalNoiseRatio(data_range=1.0).to(device)
-    fid = FrechetInceptionDistance(feature=64).to(device)
-
 
     ssim_scores = []
     psnr_values = []
@@ -55,10 +45,6 @@ def calculate_metrics(generator, dataloader, device):
             real_rgb = lab2rgb(l_channel, real_ab).to(device)
             gen_rgb = lab2rgb(l_channel, gen_ab).to(device)
 
-            # Convert the RGB images to uint8
-            real_rgb_uint8 = convert_to_uint8(real_rgb)
-            gen_rgb_uint8 = convert_to_uint8(gen_rgb)
-
             # Calculate SSIM and PSNR
             ssim_score = ssim(gen_rgb, real_rgb)
             psnr_value = psnr(gen_rgb, real_rgb)
@@ -72,19 +58,13 @@ def calculate_metrics(generator, dataloader, device):
             delta_e_value = np.mean([color.deltaE_ciede2000(real_lab[i], gen_lab[i]) for i in range(real_lab.shape[0])])
             delta_e_values.append(delta_e_value)
 
-            # Update FID using uint8 images
-            fid.update(real_rgb_uint8, real=True)
-            fid.update(gen_rgb_uint8, real=False)
-
     # Compute mean metrics over the entire dataset
     final_ssim = torch.mean(torch.tensor(ssim_scores)).item()
     final_psnr = torch.mean(torch.tensor(psnr_values)).item()
     final_delta_e = np.mean(delta_e_values)
-    final_fid = fid.compute().item()
 
     return {
         'psnr': final_psnr,
         'ssim': final_ssim,
-        'ciede2000': final_delta_e,
-        'fid': final_fid
+        'ciede2000': final_delta_e
     }

@@ -133,7 +133,7 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
               f"[D loss: {avg_loss_D:.3f}] [G loss: {avg_loss_G:.3f}] "
               f"[Val D loss: {val_loss_D:.3f}] [Val G loss: {val_loss_G:.3f}] "
               f"[PSNR: {metrics['psnr']:.3f}] [SSIM: {metrics['ssim']:.3f}] "
-              f"[CIEDE2000: {metrics['ciede2000']:.3f}] [FID: {metrics['fid']:.3f}] ")
+              f"[CIEDE2000: {metrics['ciede2000']:.3f}] ")
 
         composite_score = 1 / (val_loss_G + 1e-8)
 
@@ -146,7 +146,7 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
                   f"[D loss: {avg_loss_D:.3f}] [G loss: {avg_loss_G:.3f}] "
                   f"[Val D loss: {val_loss_D:.3f}] [Val G loss: {val_loss_G:.3f}] "
                   f"[PSNR: {metrics['psnr']:.3f}] [SSIM: {metrics['ssim']:.3f}] "
-                  f"[CIEDE2000: {metrics['ciede2000']:.3f}] [FID: {metrics['fid']:.3f}] ")
+                  f"[CIEDE2000: {metrics['ciede2000']:.3f}] ")
 
         else:
             no_improve_epochs += 1
