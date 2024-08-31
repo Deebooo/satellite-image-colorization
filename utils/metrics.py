@@ -1,23 +1,18 @@
 import torch
 import numpy as np
-from torchmetrics.functional import precision as precision_metric
-from torchmetrics.functional import recall as recall_metric
-from torchmetrics.functional import f1_score as f1_score_metric
-from torchmetrics.functional import accuracy as accuracy_metric
-from torchmetrics.image import StructuralSimilarityIndexMeasure
+from torchmetrics.image import StructuralSimilarityIndexMeasure, LearnedPerceptualImagePatchSimilarity
 import torch.nn.functional as F
 from utils.lab2rgb import lab2rgb
 
-
 def calculate_metrics(generator, dataloader, device):
-    precisions = []
-    recalls = []
-    f1s = []
     ssim_scores = []
     psnr_values = []
-    accuracies = []
+    mse_values = []
+    lpips_values = []
 
-    ssim = StructuralSimilarityIndexMeasure(data_range=1.0).to(device)
+    # Initialize SSIM and LPIPS metrics
+    ssim_metric = StructuralSimilarityIndexMeasure(data_range=1.0).to(device)
+    lpips_metric = LearnedPerceptualImagePatchSimilarity(net_type='squeeze').to(device)
 
     generator.eval()
 
@@ -32,33 +27,37 @@ def calculate_metrics(generator, dataloader, device):
             real_rgb = lab2rgb(l_channel, real_ab).to(device)
             gen_rgb = lab2rgb(l_channel, gen_ab).to(device)
 
+            # Ensure the images are in the range [-1, 1] for LPIPS
+            real_rgb = (real_rgb * 2) - 1
+            gen_rgb = (gen_rgb * 2) - 1
+
             # Calculate metrics using RGB images
-            real_binary = (real_rgb > 0.5).float()
-            gen_binary = (gen_rgb > 0.5).float()
+            for i in range(real_rgb.shape[0]):
+                # SSIM Calculation
+                ssim = ssim_metric(gen_rgb[i].unsqueeze(0), real_rgb[i].unsqueeze(0))
+                ssim_scores.append(ssim.item())
 
-            precision = precision_metric(gen_binary, real_binary, task='binary').to(device)
-            recall = recall_metric(gen_binary, real_binary, task='binary').to(device)
-            f1 = f1_score_metric(gen_binary, real_binary, task="binary").to(device)
-            accuracy = accuracy_metric(gen_binary, real_binary, task="binary").to(device)
+                # MSE Calculation
+                mse = F.mse_loss(gen_rgb[i], real_rgb[i]).item()
+                mse_values.append(mse)
 
-            ssim_score = ssim(gen_rgb, real_rgb)
+                # PSNR Calculation
+                psnr = 20 * np.log10(1.0 / np.sqrt(mse))
+                psnr_values.append(psnr)
 
-            precisions.append(precision.item())
-            recalls.append(recall.item())
-            f1s.append(f1.item())
-            accuracies.append(accuracy.item())
-            ssim_scores.append(ssim_score.item())
+                # LPIPS Calculation
+                lpips_score = lpips_metric(gen_rgb[i].unsqueeze(0), real_rgb[i].unsqueeze(0))
+                lpips_values.append(lpips_score.item())
 
-            mse = F.mse_loss(gen_rgb, real_rgb).item()
-            psnr = 20 * np.log10(1.0 / np.sqrt(mse))
-            psnr_values.append(psnr)
-
-    final_ssim = torch.mean(torch.tensor(ssim_scores)).item()
+    # Calculate average metrics over the entire dataset
+    final_ssim = np.mean(ssim_scores)
+    final_psnr = np.mean(psnr_values)
+    final_mse = np.mean(mse_values)
+    final_lpips = np.mean(lpips_values)
 
     return {
-        'precision': torch.mean(torch.tensor(precisions)).item(),
-        'recall': torch.mean(torch.tensor(recalls)).item(),
-        'f1': torch.mean(torch.tensor(f1s)).item(),
-        'psnr': np.mean(psnr_values),
+        'psnr': final_psnr,
         'ssim': final_ssim,
+        'mse': final_mse,
+        'lpips': final_lpips,
     }

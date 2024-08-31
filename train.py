@@ -129,12 +129,11 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
         val_loss_G, val_loss_D, metrics = validate(generator, discriminator, val_dataloader, criterion_GAN, criterion_pixelwise,
                                        device, lambda_pixel)
 
-        print(f"[Epoch {epoch}/{num_epochs}] "
+        print(f"[Epoch {epoch + 1}/{num_epochs}] "
               f"[D loss: {avg_loss_D:.3f}] [G loss: {avg_loss_G:.3f}] "
-              f"[Val G loss: {val_loss_G:.3f}] [Val D loss: {val_loss_D:.3f}]"
-              f"[Precision: {metrics['precision']:.3f}] "
-              f"[Recall: {metrics['recall']:.3f}] [F1 Score: {metrics['f1']:.3f}] "
-              f"[PSNR: {metrics['psnr']:.3f}] [SSIM: {metrics['ssim']:.3f}] ")
+              f"[Val D loss: {val_loss_D:.3f}] [Val G loss: {val_loss_G:.3f}] "
+              f"[PSNR: {metrics['psnr']:.3f}] [SSIM: {metrics['ssim']:.3f}] "
+              f"[MSE: {metrics['mse']:.3f}] [LPIPS: {metrics['lpips']:.3f}]")
 
         composite_score = 1 / (val_loss_G + 1e-8)
 
@@ -143,12 +142,11 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
             no_improve_epochs = 0
             torch.save(generator.state_dict(), 'prime_generator.pth')
             torch.save(discriminator.state_dict(), 'prime_discriminator.pth')
-            print(f"[---> Prime models at Epoch {epoch}/{num_epochs}] "
+            print(f"[---> Prime models at Epoch {epoch + 1}/{num_epochs}] "
                   f"[D loss: {avg_loss_D:.3f}] [G loss: {avg_loss_G:.3f}] "
-                  f"[Val G loss: {val_loss_G:.3f}] [Val D loss: {val_loss_D:.3f}]"
-                  f"[Precision: {metrics['precision']:.3f}] "
-                  f"[Recall: {metrics['recall']:.3f}] [F1 Score: {metrics['f1']:.3f}] "
-                  f"[PSNR: {metrics['psnr']:.3f}] [SSIM: {metrics['ssim']:.3f}] ")
+                  f"[Val D loss: {val_loss_D:.3f}] [Val G loss: {val_loss_G:.3f}] "
+                  f"[PSNR: {metrics['psnr']:.3f}] [SSIM: {metrics['ssim']:.3f}] "
+                  f"[MSE: {metrics['mse']:.3f}] [LPIPS: {metrics['lpips']:.3f}]")
         else:
             no_improve_epochs += 1
 
