@@ -4,6 +4,14 @@ from torchmetrics.image import StructuralSimilarityIndexMeasure, PeakSignalNoise
 from utils.lab2rgb import lab2rgb
 from skimage import color
 
+def convert_to_uint8(tensor):
+    """
+    Converts a float32 tensor in the range [0, 1] to a uint8 tensor in the range [0, 255].
+    """
+    tensor = tensor.mul(255).clamp(0, 255).byte()  # Multiply by 255 and clamp to [0, 255]
+    return tensor
+
+
 def create_lab_image(L, AB):
     # Convert PyTorch tensors to NumPy arrays
     L = L.cpu().numpy().astype(np.float32)
@@ -47,6 +55,10 @@ def calculate_metrics(generator, dataloader, device):
             real_rgb = lab2rgb(l_channel, real_ab).to(device)
             gen_rgb = lab2rgb(l_channel, gen_ab).to(device)
 
+            # Convert the RGB images to uint8
+            real_rgb_uint8 = convert_to_uint8(real_rgb)
+            gen_rgb_uint8 = convert_to_uint8(gen_rgb)
+
             # Calculate SSIM and PSNR
             ssim_score = ssim(gen_rgb, real_rgb)
             psnr_value = psnr(gen_rgb, real_rgb)
@@ -60,10 +72,9 @@ def calculate_metrics(generator, dataloader, device):
             delta_e_value = np.mean([color.deltaE_ciede2000(real_lab[i], gen_lab[i]) for i in range(real_lab.shape[0])])
             delta_e_values.append(delta_e_value)
 
-            # Update FID
-            fid.update(real_rgb, real=True)
-            fid.update(gen_rgb, real=False)
-
+            # Update FID using uint8 images
+            fid.update(real_rgb_uint8, real=True)
+            fid.update(gen_rgb_uint8, real=False)
 
     # Compute mean metrics over the entire dataset
     final_ssim = torch.mean(torch.tensor(ssim_scores)).item()
