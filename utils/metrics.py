@@ -1,16 +1,38 @@
 import torch
 import numpy as np
-from torchmetrics.image import StructuralSimilarityIndexMeasure
-import torch.nn.functional as F
+from torchmetrics.image import StructuralSimilarityIndexMeasure, PeakSignalNoiseRatio, FrechetInceptionDistance
 from utils.lab2rgb import lab2rgb
+from skimage import color
 
+def create_lab_image(L, AB):
+    # Convert PyTorch tensors to NumPy arrays
+    L = L.cpu().numpy().astype(np.float32)
+    AB = AB.cpu().numpy().astype(np.float32)
+
+    # Initialize an empty array for the LAB image
+    batch_size = L.shape[0]
+    height = L.shape[2]
+    width = L.shape[3]
+
+    lab_image = np.zeros((batch_size, height, width, 3), dtype=np.float32)
+
+    # Assign L to the first channel of the LAB image
+    lab_image[:, :, :, 0] = L.squeeze(1)
+
+    # Assign AB to the second and third channels of the LAB image
+    lab_image[:, :, :, 1:] = np.transpose(AB, (0, 2, 3, 1))
+
+    return lab_image
 
 def calculate_metrics(generator, dataloader, device):
-    ssim_metric = StructuralSimilarityIndexMeasure(data_range=1.0).to(device)
+    ssim = StructuralSimilarityIndexMeasure(data_range=1.0).to(device)
+    psnr = PeakSignalNoiseRatio(data_range=1.0).to(device)
+    fid = FrechetInceptionDistance(feature=64).to(device)
+
 
     ssim_scores = []
     psnr_values = []
-    mse_values = []
+    delta_e_values = []
 
     generator.eval()
 
@@ -25,25 +47,33 @@ def calculate_metrics(generator, dataloader, device):
             real_rgb = lab2rgb(l_channel, real_ab).to(device)
             gen_rgb = lab2rgb(l_channel, gen_ab).to(device)
 
-            # SSIM Calculation for the batch
-            ssim_batch = ssim_metric(gen_rgb, real_rgb)
-            ssim_scores.append(ssim_batch.item())
+            # Calculate SSIM and PSNR
+            ssim_score = ssim(gen_rgb, real_rgb)
+            psnr_value = psnr(gen_rgb, real_rgb)
 
-            # MSE Calculation for the batch
-            mse_batch = F.mse_loss(gen_rgb, real_rgb, reduction='mean').item()
-            mse_values.append(mse_batch)
+            ssim_scores.append(ssim_score.item())
+            psnr_values.append(psnr_value.item())
 
-            # PSNR Calculation for the batch
-            psnr_batch = 20 * np.log10(1.0 / np.sqrt(mse_batch))
-            psnr_values.append(psnr_batch)
+            # Create LAB images
+            real_lab = create_lab_image(l_channel, real_ab)
+            gen_lab = create_lab_image(l_channel, gen_ab)
+            delta_e_value = np.mean([color.deltaE_ciede2000(real_lab[i], gen_lab[i]) for i in range(real_lab.shape[0])])
+            delta_e_values.append(delta_e_value)
 
-    # Calculate average metrics over the entire dataset
-    final_ssim = np.mean(ssim_scores)
-    final_psnr = np.mean(psnr_values)
-    final_mse = np.mean(mse_values)
+            # Update FID
+            fid.update(real_rgb, real=True)
+            fid.update(gen_rgb, real=False)
+
+
+    # Compute mean metrics over the entire dataset
+    final_ssim = torch.mean(torch.tensor(ssim_scores)).item()
+    final_psnr = torch.mean(torch.tensor(psnr_values)).item()
+    final_delta_e = np.mean(delta_e_values)
+    final_fid = fid.compute().item()
 
     return {
         'psnr': final_psnr,
         'ssim': final_ssim,
-        'mse': final_mse,
+        'ciede2000': final_delta_e,
+        'fid': final_fid
     }
