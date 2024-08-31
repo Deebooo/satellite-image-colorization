@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from torchmetrics.image import StructuralSimilarityIndexMeasure, PeakSignalNoiseRatio
+from torchmetrics.image import PeakSignalNoiseRatio
 from utils.lab2rgb import lab2rgb
 from skimage import color
 
@@ -25,10 +25,8 @@ def create_lab_image(L, AB):
     return lab_image
 
 def calculate_metrics(generator, dataloader, device):
-    ssim = StructuralSimilarityIndexMeasure(data_range=1.0).to(device)
     psnr = PeakSignalNoiseRatio(data_range=1.0).to(device)
 
-    ssim_scores = []
     psnr_values = []
     delta_e_values = []
 
@@ -45,11 +43,9 @@ def calculate_metrics(generator, dataloader, device):
             real_rgb = lab2rgb(l_channel, real_ab).to(device)
             gen_rgb = lab2rgb(l_channel, gen_ab).to(device)
 
-            # Calculate SSIM and PSNR
-            ssim_score = ssim(gen_rgb, real_rgb)
+            # Calculate PSNR
             psnr_value = psnr(gen_rgb, real_rgb)
 
-            ssim_scores.append(ssim_score.item())
             psnr_values.append(psnr_value.item())
 
             # Create LAB images
@@ -59,12 +55,10 @@ def calculate_metrics(generator, dataloader, device):
             delta_e_values.append(delta_e_value)
 
     # Compute mean metrics over the entire dataset
-    final_ssim = torch.mean(torch.tensor(ssim_scores)).item()
     final_psnr = torch.mean(torch.tensor(psnr_values)).item()
     final_delta_e = np.mean(delta_e_values)
 
     return {
         'psnr': final_psnr,
-        'ssim': final_ssim,
         'ciede2000': final_delta_e
     }
