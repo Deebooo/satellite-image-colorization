@@ -18,7 +18,7 @@ def save_sample_images(generator, fixed_l_channel, fixed_real_ab, epoch, metrics
         sample_save_dir = os.path.join(save_dir, f'sample_{i}')
 
         metrics_text = (f"PSNR: {metrics['psnr']:.3f} | SSIM: {metrics['ssim']:.3f} | "
-                        f"MSE: {metrics['mse']:.3f} | LPIPS: {metrics['lpips']:.3f} | "
+                        f"MSE: {metrics['mse']:.3f} | "
                         f"Val G loss: {val_loss_G:.3f} | Val D loss: {val_loss_D:.3f}")
 
         fig = plt.figure(figsize=(15, 10))
