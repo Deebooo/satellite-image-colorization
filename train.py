@@ -134,7 +134,8 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
               f"[Val D loss: {val_loss_D:.3f}] [Val G loss: {val_loss_G:.3f}] "
               f"[PSNR: {metrics['psnr']:.3f}] [CIEDE2000: {metrics['ciede2000']:.3f}] ")
 
-        composite_score = 1 / (val_loss_G + 1e-8) + 1 / (metrics['ciede2000'] + 1e-8)
+        # composite_score = 1 / (val_loss_G + 1e-8) + 1 / (metrics['ciede2000'] + 1e-8)
+        composite_score = 1 / (val_loss_G + 1e-8)
 
         if composite_score > best_composite_score:
             best_composite_score = composite_score
