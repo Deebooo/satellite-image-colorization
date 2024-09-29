@@ -1,2 +1,3 @@
 .DS_Store
 .idea
+utils/GAN_launch.sh

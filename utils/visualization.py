@@ -4,7 +4,7 @@ import torch
 from utils.lab2rgb import lab2rgb
 
 def save_sample_images(generator, fixed_l_channel, fixed_real_ab, epoch, metrics, val_loss_G, val_loss_D):
-    save_dir = '/local_disk/helios/skhelil/fichiers/Linkedin/'
+    save_dir = '/home/nas-wks01/users/uapv2300011/gan/results/plot'
 
     generator.eval()
     with torch.no_grad():

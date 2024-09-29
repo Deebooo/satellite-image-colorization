@@ -49,8 +49,8 @@ def cut_raster_with_grid(image_paths, output_img_dir, tile_size=512):
                 global_counter += 1  # Increment the global counter after each tile is processed
 
 # Example usage
-image_dir = "/local_disk/helios/skhelil/fichiers/images_satt/satt_ori"
-output_img_dir = "/local_disk/helios/skhelil/fichiers/images_satt/satt_decoup"
+image_dir = "/home/nas-wks01/users/uapv2300011/gan/datas/images_full"
+output_img_dir = "/home/nas-wks01/users/uapv2300011/gan/datas/tiles"
 tile_size = 256  # Size in pixels
 
 # Get all image paths from the directory
