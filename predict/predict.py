@@ -1,10 +1,11 @@
+import os
 import torch
 import torch.nn as nn
 import numpy as np
 import rasterio
 from rasterio.windows import Window
 from utils.lab2rgb import lab2rgb
-from skimage import  color
+from skimage import color
 
 
 # Generator class (same as in the training script)
@@ -126,9 +127,7 @@ def predict_tile(model, l_channel, device):
     return output
 
 
-def process_geotiff(input_path, output_path, model_path, tile_size=256):
-    model, device = load_model(model_path)
-
+def process_geotiff(input_path, output_path, model, device, tile_size=256):
     with rasterio.open(input_path) as src:
         profile = src.profile.copy()
         profile.update(count=3, dtype=rasterio.uint8)
@@ -165,21 +164,26 @@ def process_geotiff(input_path, output_path, model_path, tile_size=256):
                     # Convert LAB to RGB
                     colorized_tile = lab2rgb(l_channel, gen_ab)
 
-                    # Remove padding if it was added
-                    colorized_tile = colorized_tile[:, :window.height, :window.width, :]
-
                     # Convert to uint8 and ensure it's in the correct shape
                     colorized_tile = (colorized_tile.squeeze().permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)
 
-                    # Write the colorized tile to the output image
-                    dst.write(colorized_tile.transpose(2, 0, 1), window=window)
+                    # Write the colorized tile to the output image, avoiding the padded pixels
+                    tile_height, tile_width = min(tile_size, height - i), min(tile_size, width - j)
+                    dst.write(colorized_tile[:tile_height, :tile_width, :].transpose(2, 0, 1), window=window)
 
     print(f"Colorized image saved to {output_path}")
 
+def process_folder(input_folder, output_folder, model_path, tile_size=256):
+    model, device = load_model(model_path)
+
+    for filename in os.listdir(input_folder):
+        if filename.endswith(".tif"):
+            input_path = os.path.join(input_folder, filename)
+            output_path = os.path.join(output_folder, f"{os.path.splitext(filename)[0]}_rgb.tif")
+            process_geotiff(input_path, output_path, model, device, tile_size)
 
 if __name__ == "__main__":
-    input_geotiff_path = "/local_disk/helios/skhelil/fichiers/images_satt/pred/images_grayscale/avignon.tif"
-    output_geotiff_path = "/local_disk/helios/skhelil/fichiers/images_satt/pred/prediction_RGB/avignon_rgb.tif"
-    model_path = "/local_disk/helios/skhelil/scripts/GAN/Models/LABV2.0/prime_generator.pth"
-
-    process_geotiff(input_geotiff_path, output_geotiff_path, model_path)
+    input_folder = "/home/nas-wks01/users/uapv2300011/gan/datas/predict_dataset/Paris"
+    output_folder = "/home/nas-wks01/users/uapv2300011/gan/datas/predicted_dataset/Paris"
+    model_path = "/home/nas-wks01/users/uapv2300011/gan/project/bon_v1/prime_generator.pth"
+    process_folder(input_folder, output_folder, model_path)

@@ -6,6 +6,7 @@ from tqdm import tqdm
 from utils.metrics import calculate_metrics
 from utils.visualization import save_sample_images
 
+
 def validate(generator, discriminator, dataloader, criterion_GAN, criterion_pixelwise, device, lambda_pixel):
     generator.eval()
     discriminator.eval()
@@ -58,14 +59,15 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
         print(f"Using {torch.cuda.device_count()} GPUs for data parallelism for discriminator.")
         discriminator = nn.DataParallel(discriminator)
 
-    optimizer_G = optim.Adam(generator.parameters(), lr=0.00002, betas=(0.5, 0.999)) #0.000005, #0.0001
-    optimizer_D = optim.Adam(discriminator.parameters(), lr=0.000005, betas=(0.5, 0.999))
+    optimizer_G = optim.Adam(generator.parameters(), lr=0.000006, betas=(0.5, 0.999))
+    optimizer_D = optim.Adam(discriminator.parameters(), lr=0.0000001, betas=(0.5, 0.999))
+
 
     criterion_GAN = nn.MSELoss()
     criterion_pixelwise = nn.L1Loss()
 
     lambda_pixel = 100
-    early_stopping_patience = 10
+    early_stopping_patience = 20
     no_improve_epochs = 0
 
     best_composite_score = float('-inf')
@@ -129,34 +131,34 @@ def train(generator, discriminator, train_dataloader, val_dataloader, num_epochs
         val_loss_G, val_loss_D, metrics = validate(generator, discriminator, val_dataloader, criterion_GAN, criterion_pixelwise,
                                        device, lambda_pixel)
 
-        print(f"[Epoch {epoch}/{num_epochs}] "
+        print(f"[Epoch {epoch + 1}/{num_epochs}] "
               f"[D loss: {avg_loss_D:.3f}] [G loss: {avg_loss_G:.3f}] "
-              f"[Val G loss: {val_loss_G:.3f}] [Val D loss: {val_loss_D:.3f}]"
-              f"[Precision: {metrics['precision']:.3f}] "
-              f"[Recall: {metrics['recall']:.3f}] [F1 Score: {metrics['f1']:.3f}] "
-              f"[PSNR: {metrics['psnr']:.3f}] [SSIM: {metrics['ssim']:.3f}] ")
+              f"[Val D loss: {val_loss_D:.3f}] [Val G loss: {val_loss_G:.3f}] "
+              f"[PSNR: {metrics['psnr']:.3f}] [CIEDE2000: {metrics['ciede2000']:.3f}] ")
 
-        composite_score = 1 / (val_loss_G + 1e-8)
+        composite_score = 1 / (val_loss_G + 1e-8) + 1 / (metrics['ciede2000'] + 1e-8)
+        #composite_score = 1 / (val_loss_G + 1e-8)
 
         if composite_score > best_composite_score:
             best_composite_score = composite_score
             no_improve_epochs = 0
             torch.save(generator.state_dict(), 'prime_generator.pth')
             torch.save(discriminator.state_dict(), 'prime_discriminator.pth')
-            print(f"[---> Prime models at Epoch {epoch}/{num_epochs}] "
+            print(f"[---> Prime models at Epoch {epoch + 1}/{num_epochs}] "
                   f"[D loss: {avg_loss_D:.3f}] [G loss: {avg_loss_G:.3f}] "
-                  f"[Val G loss: {val_loss_G:.3f}] [Val D loss: {val_loss_D:.3f}]"
-                  f"[Precision: {metrics['precision']:.3f}] "
-                  f"[Recall: {metrics['recall']:.3f}] [F1 Score: {metrics['f1']:.3f}] "
-                  f"[PSNR: {metrics['psnr']:.3f}] [SSIM: {metrics['ssim']:.3f}] ")
+                  f"[Val D loss: {val_loss_D:.3f}] [Val G loss: {val_loss_G:.3f}] "
+                  f"[PSNR: {metrics['psnr']:.3f}] [CIEDE2000: {metrics['ciede2000']:.3f}] ")
+
         else:
             no_improve_epochs += 1
 
         if no_improve_epochs >= early_stopping_patience:
             print(f"Early stopping triggered after {early_stopping_patience} epochs without improvement.")
+            print(f"Learning rate for Generator: {optimizer_G.param_groups[0]['lr']}")
+            print(f"Learning rate for Discriminator: {optimizer_D.param_groups[0]['lr']}")
             break
 
         if epoch % 1 == 0:
             save_sample_images(generator, fixed_grayscale, fixed_real_ab, epoch, metrics, val_loss_G, val_loss_D)
 
-    return generator, discriminator
+    return generator, discriminator, optimizer_G.param_groups[0]['lr'], optimizer_D.param_groups[0]['lr']    return generator, discriminator, optimizer_G.param_groups[0]['lr'], optimizer_D.param_groups[0]['lr']

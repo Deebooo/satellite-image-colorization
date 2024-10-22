@@ -1,23 +1,34 @@
 import torch
 import numpy as np
-from torchmetrics.functional import precision as precision_metric
-from torchmetrics.functional import recall as recall_metric
-from torchmetrics.functional import f1_score as f1_score_metric
-from torchmetrics.functional import accuracy as accuracy_metric
-from torchmetrics.image import StructuralSimilarityIndexMeasure
-import torch.nn.functional as F
+from torchmetrics.image import PeakSignalNoiseRatio
 from utils.lab2rgb import lab2rgb
+from skimage import color
 
+def create_lab_image(L, AB):
+    # Convert PyTorch tensors to NumPy arrays
+    L = (L.cpu().numpy().astype(np.float32) + 1.0) * 50.0  # L back to [0, 100]
+    AB = AB.cpu().numpy().astype(np.float32) * 128.0  # AB back to [-128, 128]
+
+    # Initialize an empty array for the LAB image
+    batch_size = L.shape[0]
+    height = L.shape[2]
+    width = L.shape[3]
+
+    lab_image = np.zeros((batch_size, height, width, 3), dtype=np.float32)
+
+    # Assign L to the first channel of the LAB image
+    lab_image[:, :, :, 0] = L.squeeze(1)
+
+    # Assign AB to the second and third channels of the LAB image
+    lab_image[:, :, :, 1:] = np.transpose(AB, (0, 2, 3, 1))
+
+    return lab_image
 
 def calculate_metrics(generator, dataloader, device):
-    precisions = []
-    recalls = []
-    f1s = []
-    ssim_scores = []
-    psnr_values = []
-    accuracies = []
+    psnr = PeakSignalNoiseRatio(data_range=1.0).to(device)
 
-    ssim = StructuralSimilarityIndexMeasure(data_range=1.0).to(device)
+    psnr_values = []
+    delta_e_values = []
 
     generator.eval()
 
@@ -32,33 +43,22 @@ def calculate_metrics(generator, dataloader, device):
             real_rgb = lab2rgb(l_channel, real_ab).to(device)
             gen_rgb = lab2rgb(l_channel, gen_ab).to(device)
 
-            # Calculate metrics using RGB images
-            real_binary = (real_rgb > 0.5).float()
-            gen_binary = (gen_rgb > 0.5).float()
+            # Calculate PSNR
+            psnr_value = psnr(gen_rgb, real_rgb)
 
-            precision = precision_metric(gen_binary, real_binary, task='binary').to(device)
-            recall = recall_metric(gen_binary, real_binary, task='binary').to(device)
-            f1 = f1_score_metric(gen_binary, real_binary, task="binary").to(device)
-            accuracy = accuracy_metric(gen_binary, real_binary, task="binary").to(device)
+            psnr_values.append(psnr_value.item())
 
-            ssim_score = ssim(gen_rgb, real_rgb)
+            # Create LAB images
+            real_lab = create_lab_image(l_channel, real_ab)
+            gen_lab = create_lab_image(l_channel, gen_ab)
+            delta_e_value = np.mean([color.deltaE_ciede2000(real_lab[i], gen_lab[i]) for i in range(real_lab.shape[0])])
+            delta_e_values.append(delta_e_value)
 
-            precisions.append(precision.item())
-            recalls.append(recall.item())
-            f1s.append(f1.item())
-            accuracies.append(accuracy.item())
-            ssim_scores.append(ssim_score.item())
-
-            mse = F.mse_loss(gen_rgb, real_rgb).item()
-            psnr = 20 * np.log10(1.0 / np.sqrt(mse))
-            psnr_values.append(psnr)
-
-    final_ssim = torch.mean(torch.tensor(ssim_scores)).item()
+    # Compute mean metrics over the entire dataset
+    final_psnr = torch.mean(torch.tensor(psnr_values)).item()
+    final_delta_e = np.mean(delta_e_values)
 
     return {
-        'precision': torch.mean(torch.tensor(precisions)).item(),
-        'recall': torch.mean(torch.tensor(recalls)).item(),
-        'f1': torch.mean(torch.tensor(f1s)).item(),
-        'psnr': np.mean(psnr_values),
-        'ssim': final_ssim,
+        'psnr': final_psnr,
+        'ciede2000': final_delta_e
     }

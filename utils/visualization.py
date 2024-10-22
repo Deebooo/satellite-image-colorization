@@ -4,7 +4,7 @@ import torch
 from utils.lab2rgb import lab2rgb
 
 def save_sample_images(generator, fixed_l_channel, fixed_real_ab, epoch, metrics, val_loss_G, val_loss_D):
-    save_dir = '/local_disk/helios/skhelil/fichiers/Linkedin/'
+    save_dir = '/home/nas-wks01/users/uapv2300011/gan/results/plot_2'
 
     generator.eval()
     with torch.no_grad():
@@ -17,9 +17,7 @@ def save_sample_images(generator, fixed_l_channel, fixed_real_ab, epoch, metrics
     for i in range(3):
         sample_save_dir = os.path.join(save_dir, f'sample_{i}')
 
-        metrics_text = (f"Precision: {metrics['precision']:.3f} | Recall: {metrics['recall']:.3f} | "
-                        f"F1 Score: {metrics['f1']:.3f} | "
-                        f"PSNR: {metrics['psnr']:.3f} | SSIM: {metrics['ssim']:.3f} | "
+        metrics_text = (f"PSNR: {metrics['psnr']:.3f} | CIEDE2000: {metrics['ciede2000']:.3f} | "
                         f"Val G loss: {val_loss_G:.3f} | Val D loss: {val_loss_D:.3f}")
 
         fig = plt.figure(figsize=(15, 10))
