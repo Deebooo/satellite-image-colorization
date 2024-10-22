@@ -13,7 +13,7 @@ import time
 if __name__ == "__main__":
     batch_size = 64
     val_batch_size = 64
-    num_epochs = 100
+    num_epochs = 300
     image_size = 256
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -51,6 +51,8 @@ if __name__ == "__main__":
     try:
         trained_generator, trained_discriminator = train(generator, discriminator, train_dataloader, val_dataloader,
                                                          num_epochs, device)
+        print(f"Learning Rate for Generator: {lr_G}")
+        print(f"Learning Rate for Discriminator: {lr_D}")
     except Exception as e:
         print(f"An error occurred during training: {e}")
     finally:
